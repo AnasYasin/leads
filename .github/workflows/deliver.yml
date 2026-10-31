@@ -1,0 +1,85 @@
+name: Deliver shortlist
+
+# The radar agent pushes a new file into shortlists/. This rebuilds reports/LATEST.md
+# so it holds the newest two runs, then emails the newest one.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'shortlists/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deliver
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      # History is needed to tell a first send from a re-render (scripts/correction.py).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Rebuild reports/LATEST.md
+        id: build
+        run: echo "newest=$(python3 scripts/build_latest.py)" >> "$GITHUB_OUTPUT"
+
+      # reports/LATEST.md is bookkeeping. It must never be able to stop the email, which is the
+      # only thing this workflow exists to do. On 26 August 2026 evening this step's
+      # `git push` lost a race with a concurrent run, the step failed, and the email step
+      # was skipped — so that evening's shortlist (3 new jobs) was never delivered and
+      # never could be, because those jobs were already written into state/seen.json. Hence the
+      # rebase-and-retry below and `continue-on-error`.
+      - name: Commit reports/LATEST.md if it changed
+        continue-on-error: true
+        run: |
+          if [ -z "$(git status --porcelain reports/LATEST.md)" ]; then
+            echo "reports/LATEST.md unchanged"
+            exit 0
+          fi
+          git config user.name "job-radar"
+          git config user.email "imanasyasin@gmail.com"
+          git add reports/LATEST.md
+          git commit -m "Roll reports/LATEST.md to the newest two runs [skip ci]"
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push rejected, rebasing and retrying ($i/3)"
+            git pull --rebase origin main || break
+            sleep $((i * 3))
+          done
+          echo "could not push reports/LATEST.md; the email still goes out"
+          exit 1
+
+      # 29 Sep 2026: the morning run pushed "7 new" and then "9 new (corrected)", and both were
+      # mailed in full. A shortlist that was committed before has been emailed before, so a
+      # re-render sends only what changed. Never allowed to stop the email: on any error the
+      # full shortlist goes out as before.
+      - name: Is this a re-render of an emailed run
+        id: corr
+        if: always() && steps.build.outputs.newest != ''
+        continue-on-error: true
+        env:
+          NEWEST: ${{ steps.build.outputs.newest }}
+        run: echo "path=$(python3 scripts/correction.py "$NEWEST" || true)" >> "$GITHUB_OUTPUT"
+
+      # Runs even if the reports/LATEST.md commit failed. Guarded on `newest` so a failed build
+      # step cannot send an empty email.
+      - name: Email the newest run
+        if: always() && steps.build.outputs.newest != ''
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NEWEST: ${{ steps.build.outputs.newest }}
+          CORRECTION: ${{ steps.corr.outputs.path }}
+        run: |
+          if [ -n "$CORRECTION" ] && [ -f "$CORRECTION" ]; then
+            python3 scripts/send_mail.py --raw "$CORRECTION"
+          else
+            python3 scripts/send_mail.py "$NEWEST"
+          fi

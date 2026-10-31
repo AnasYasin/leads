@@ -1,0 +1,735 @@
+# Job radar configuration. Every profile fact, search term, title filter and ranking weight the
+# scripts use lives here, so the radar can be pointed at another person or another kind of job by
+# editing this file only. PROFILE.md stays the prose guide the agent scores with.
+#
+# Patterns are regular expressions, matched case-insensitively. A list of patterns means "any of
+# these" (they are joined with |). The history of why each term is here is in the git log of the
+# script that used to hold it (scripts/filter_run.py, scripts/prescore.py, scripts/collect_*.py).
+# Moved here on 29 Sep 2026.
+
+# Who the radar searches for. referral_companies skip the seniority and not-wanted title filters.
+# applied_companies are checked together with applications.md.
+profile:
+  # Filled by the setup session (SETUP.md). Patterns are regular expressions, case-insensitive.
+  name: ""
+  guide: PROFILE.md
+  # Companies where the candidate has a personal contact. Their rows skip the seniority and
+  # not-wanted title filters and are sent first. Empty list when there is none.
+  referral_companies: []
+  # Companies applied to before applications.md existed. Usually empty for a new setup.
+  applied_companies: []
+
+# What each collector asks each job board for. Filled by the setup session from the target roles.
+# Every list must have at least one entry before the first run.
+search:
+  linkedin:
+    roles: []
+    places: []
+    # Extra queries with their own time window in hours, for a referral company. Empty when none.
+    targets: []
+  bundesagentur:
+    queries: []
+    # '' means nationwide.
+    places: []
+  xing:
+    queries: []
+    places: []
+    pages: 8
+  stepstone:
+    roles: []
+    cities: []
+  talent:
+    roles: []
+    cities: []
+  getro:
+    # VC portfolio job boards, by Getro collection id. The defaults are German funds.
+    collections:
+    - id: 1680
+      name: Point Nine
+    - id: 617
+      name: Earlybird
+    - id: 44081
+      name: Cherry Ventures
+    - id: 234
+      name: HV Capital
+    - id: 9233
+      name: Merantix AI Campus
+
+# Title, employer and location filters in filter_run.py. A title passes when it matches
+# title_good and none of title_bad or senior_out.
+filters:
+  title_good:
+  - data engineer
+  - analytics engineer
+  - dateningenieur
+  - \betl\b
+  - data platform
+  - mlops
+  - machine[- ]?learning
+  - machine-\s*/
+  - maschinelle[ns]? lernen
+  - \bml\b
+  - deep[- ]?learning
+  - computer[- ]?vision
+  - \bcv\b
+  - perception
+  - \bnlp\b
+  - natural language
+  - \bllm\b
+  - generative ai
+  - \bgenai\b
+  - applied scientist
+  - research scientist
+  - research engineer
+  - data scientist
+  - \bai\b
+  - artificial intelligence
+  - künstliche intelligenz
+  - \bki[- ]
+  - foundation model
+  - agentic
+  - reinforcement learning
+  - neural
+  - doktorand
+  - phd
+  - promotion
+  - doctoral
+  - vision.language
+  - \bvla\b
+  - \bvlm\b
+  - voice ai
+  - speech recognition
+  - multimodal
+  - perception engineer
+  - robot(ic)?s? learning
+  # 9 Oct 2026 audit: these titles were dropped before anyone read them.
+  - forward[- ]deployed
+  - machine[- ]vision
+  - \bvision engineer
+  - bildverarbeitung
+  - data[- ]science
+  - datenwissenschaft
+  - \bki\b
+  - embodied
+  - diffusion model
+  - \baudio\b
+  - \bspeech\b
+  - spracherkennung
+  - sprachtechnologie
+  - acoustic
+  - akustik
+  - sound event
+  - speaker (recognition|verification|diarization|identification)
+  - \btts\b
+  - text.to.speech
+  - \basr\b
+  - music information
+  - voice (assistant|technology|engineer)
+  - geospatial
+  - remote sensing
+  - satellite (image|data)
+  - earth observation
+  - orthomosaic
+  - medical imaging
+  - image analysis
+  - image processing
+  - radiolog
+  - pathology ai
+  - agents?[ -]+(architect|engineer|platform|infra|system|sandbox|orchestrat|runtime|framework|harness|code|tooling|stack)
+  - (\bai|\bllm|multi)[ -]*agents?\b
+  - agents?\s*(&|and)\s*automation
+  - wissenschaftliche[rn]? mitarbeiter
+  title_bad:
+  - sales
+  - account executive
+  - marketing
+  - recruit
+  - talent (acquisition|attraction|partner|management|scout|sourc)
+  - people ops
+  - customer success
+  - customer support
+  - support engineer
+  - business development
+  - (support|service|call ?cent(er|re)|sales|field|booking|travel|insurance)\s+agent\b
+  - kundenberater
+  - servicemitarbeiter
+  - controller
+  - accounting
+  - finance manager
+  - legal counsel
+  - office manager
+  - (product|ux|ui|graphic|grafik|visual|web|interior|fashion|motion|game|kommunikations|mode|industrial)[- ]?designer
+  - copywriter
+  - content (creator|manager|writer|strateg|market|editor|moderat|produc|specialist)
+  - social media
+  - intern(al)? communication
+  - weiterbildung
+  - umschulung
+  - ausbildung zum
+  - umschul
+  - \bsdr\b
+  - \bbdr\b
+  - partner manager
+  - procurement
+  - \blogistics (manager|coordinator|specialist)\b
+  - \blogistik(er|koordinator|leiter)\b
+  - mechanic
+  - electrician
+  - technician
+  - monteur
+  - installateur
+  - \bpflege
+  - krankenpfleg
+  - erzieher
+  - lehrer
+  - verkäufer
+  - \bfahrer
+  - \bkoch\b
+  - kauf(frau|mann)
+  # 9 Oct 2026: 'radiolog' and 'akustik' in title_good let doctor and hearing-aid jobs through once the
+  # location whitelist stopped hiding them.
+  - fach(arzt|ärzt)
+  - oberarzt
+  - \b(arzt|ärztin)\b
+  - hörakustik
+  - pädakustik
+  - praktikum im bereich vertrieb
+  # Out whatever the title says: management and lead roles, sales and product roles, data analyst and
+  # BI (unless the title also names ML, see data_family). 30 Sep 2026: data engineering is wanted.
+  not_wanted:
+  - business intelligence
+  - \bbi\b developer
+  - data analyst
+  - salesforce
+  - power bi
+  - \bmanager\b
+  - \bgtm\b
+  - founder'?s associate
+  - product owner
+  - product manager
+  - project lead
+  - \bsales\b
+  - head of
+  - vp of
+  - vice president
+  - director
+  - chief
+  - principal
+  - staff engineer
+  # Out only when the title names no AI, ML or data work (30 Sep 2026: an AI consultant or an MLOps
+  # platform engineer is read; a plain DevOps or frontend role is not).
+  not_wanted_unless_ai:
+  - devops
+  - platform engineer
+  - site reliability
+  - \bsre\b
+  - frontend
+  - front-end
+  - \bconsultant\b
+  - \bconsulting\b
+  - transformation
+  - solutions? architect
+  ai_or_data:
+  - computer vision
+  - machine learning
+  - deep learning
+  - \bnlp\b
+  - \bllm\b
+  - \bml\b
+  - \bai\b
+  - \bki\b
+  - ki-
+  - -ki\b
+  - künstliche intelligenz
+  - artificial intelligence
+  - mlops
+  - genai
+  - generative
+  - data engineer
+  - analytics engineer
+  - dateningenieur
+  - \betl\b
+  - data platform
+  - \bdata\b
+  - \bdaten
+  data_family:
+  - business intelligence
+  - \bbi\b developer
+  - data analyst
+  - power bi
+  core_ml:
+  - data scien
+  - computer vision
+  - machine learning
+  - deep learning
+  - \bnlp\b
+  - \bllm\b
+  - \bml\b
+  - perception
+  - research (scientist|engineer)
+  - applied scientist
+  - foundation model
+  - multimodal
+  - representation learning
+  - self.supervised
+  - contrastive
+  - segmentation
+  - detection
+  - \bvlm\b
+  - \bvla\b
+  - generative
+  senior_out:
+  - \b(head|director|vp|chief|principal)\b
+  - \bstaff\s+(engineer|scientist|researcher|developer)\b
+  phd_off:
+  - doktorand
+  - \bphd\b
+  - \bph\.d\b
+  - doctoral
+  - promotionsstelle
+  - \bpromotion\b
+  - dissertation
+  - werkstudent
+  - working student
+  - studentische
+  title_noise_drop:
+  - \b(werkstudent\w*|working student|duales? studium|dualer student|ausbildung|azubi|auszubildende\w*|abschlussarbeit|masterarbeit|bachelorarbeit|master'?s thesis|bachelor'?s thesis|thesis|techniker\w*|elektroniker\w*|mechatroniker\w*|elektriker\w*|monteur\w*|arzt|ärztin|aerztin|fachärzt\w*|facharzt\w*|radiolog\w*|pflegefach\w*|krankenpfleg\w*|mta-?f?|sachbearbeiter\w*|buchhalt\w*|steuerfach\w*|lehrer\w*|erzieher\w*|verkäufer\w*|kassierer\w*|fahrer\w*|lagerist\w*)\b
+  title_field:
+  - \b(ai|ki|ml|machine learning|maschinelles lernen|deep learning|data|daten|computer vision|llm|nlp|neural|künstliche intelligenz|kuenstliche intelligenz|algorithm|phd)\b
+  - ki-
+  - -ki\b
+  junk_employer:
+  - alfatraining
+  - bildungswerk
+  - akademie
+  - weiterbildung
+  - comcave
+  - wbs training
+  - gfn gmbh
+  - dekra akademie
+  - \bindeed\b
+  - umschulung
+  - fortbildung
+  recruiter:
+  - randstad
+  - hays
+  - gulp
+  - personaldienst
+  - zeitarbeit
+  - adecco
+  - brunel
+  - ferchau
+  - zeitwert
+  - expertum
+  - piening
+  - personalberatung
+  - personalvermittlung
+  - recruit
+  - headhunt
+  - manpower
+  - orizon
+  - tintschl
+  - \bdis ag\b
+  - academic work
+  - michael page
+  - robert half
+  - experis
+  - amoria bond
+  - darwin recruitment
+  - nigel frank
+  - austin fraser
+  - computer futures
+  - progressive recruitment
+  - harvey nash
+  - modis
+  - akkodis
+  - \bsthree\b
+  - \btechminds\b
+  - foxio
+  - whybrilliant
+  - talent(s)? (partner|solution|hub|network)
+  - staffing
+  location_ok:
+  - germany
+  - deutschland
+  - berlin
+  - münchen
+  - munich
+  - hamburg
+  - köln
+  - cologne
+  - frankfurt
+  - stuttgart
+  - düsseldorf
+  - leipzig
+  - dresden
+  - hannover
+  - nürnberg
+  - nuremberg
+  - bremen
+  - karlsruhe
+  - heidelberg
+  - darmstadt
+  - bonn
+  - aachen
+  - münster
+  - mannheim
+  - freiburg
+  - potsdam
+  - jena
+  - ilmenau
+  - tübingen
+  - regensburg
+  - ulm
+  - kassel
+  - magdeburg
+  - augsburg
+  - mainz
+  - ',\s*de\b'
+  # 9 Oct 2026 audit: a city whitelist dropped Dortmund, Bochum, Osnabrück, state names and a bare 'DE'.
+  - ^\W*de\W*$
+  - \bnrw\b
+  - bayern
+  - bavaria
+  - baden.w(ü|ue|u)rttemberg
+  - nordrhein.westfalen
+  - north rhine
+  - hessen
+  - hesse
+  - niedersachsen
+  - lower saxony
+  - sachsen
+  - saxony
+  - th(ü|ue|u)ringen
+  - thuringia
+  - brandenburg
+  - schleswig.holstein
+  - rheinland.pfalz
+  - rhineland
+  - saarland
+  - mecklenburg
+  - dortmund
+  - bochum
+  - essen
+  - duisburg
+  - gelsenkirchen
+  - wuppertal
+  - bielefeld
+  - osnabr(ü|ue|u)ck
+  - paderborn
+  - siegen
+  - krefeld
+  - m(ö|oe|o)nchengladbach
+  - oberhausen
+  - leverkusen
+  - neuss
+  - wiesbaden
+  - erlangen
+  - ingolstadt
+  - w(ü|ue|u)rzburg
+  - wolfsburg
+  - braunschweig
+  - g(ö|oe|o)ttingen
+  - kiel
+  - l(ü|ue|u)beck
+  - rostock
+  - oldenburg
+  - chemnitz
+  - halle
+  - erfurt
+  - saarbr(ü|ue|u)cken
+  - koblenz
+  - trier
+  - ludwigshafen
+  - heilbronn
+  - pforzheim
+  - reutlingen
+  - konstanz
+  - offenburg
+  - aalen
+  - oberkochen
+  - garching
+  - gilching
+  - unterschleißheim
+  - eschborn
+  - walldorf
+  - \bdeu\b
+  - remote
+  - europe
+  - eu\b
+  - austria
+  - wien
+  - vienna
+  - graz
+  - netherlands
+  - amsterdam
+  - utrecht
+  - barcelona
+  - madrid
+  - spain
+  - paris
+  - france
+  - belgium
+  - brussels
+  - ghent
+  - stockholm
+  - sweden
+  - denmark
+  - copenhagen
+  - ireland
+  - dublin
+  - poland
+  - warsaw
+  - portugal
+  - lisbon
+  - italy
+  - milan
+  - finland
+  - helsinki
+  - zurich
+  - switzerland
+  location_out:
+  - \b(london|united kingdom|\buk\b|new york|san francisco|palo alto|menlo park|seattle|boston|austin|toronto|canada|india|bangalore|singapore|tokyo|sydney|australia|dubai|tel aviv|israel|brazil|mexico|zürich|zurich|kyiv|ukraine|belgrade|serbia|istanbul|turkey|usa|united states)\b
+  location_anywhere:
+  - ^\W*(world|worldwide|earth|global|globe|anywhere|international)\W*$
+
+# Read order (scripts/prescore.py). Points add up; a higher score is read first. Nothing is dropped.
+prescore:
+  ml_word:
+  - machine learning
+  - \bml\b
+  - deep learning
+  - \bai\b
+  - \bki\b
+  - research
+  - scientist
+  - algorithm
+  - neural
+  - data science
+  title_specific:
+  - computer vision
+  - \bcv engineer
+  - perception
+  - point cloud
+  - lidar
+  - \bslam\b
+  - robot learning
+  - speech recognition
+  - \basr\b
+  - voice ai
+  - audio ml
+  - speech ai
+  title_generic:
+  - \bvision\b
+  - \bimage
+  - \bimaging\b
+  - \bvideo\b
+  - \b3d\b
+  - \baudio\b
+  - \bspeech\b
+  - \bvoice\b
+  - \bacoustic
+  - \bsound\b
+  - \bmusic\b
+  title_specific_points: 4
+  title_plus:
+  - points: 3
+    pattern:
+    - machine learning
+    - \bml\b
+    - deep learning
+    - maschinelles lernen
+    - ki-entwickler
+    - ki entwickler
+  - points: 3
+    pattern:
+    - research engineer
+    - research scientist
+    - applied scientist
+    - applied ai
+    - forschung
+  - points: 3
+    pattern:
+    - \bnlp\b
+    - \bllm\b
+    - genai
+    - generative
+    - agentic
+    - \bai\b
+    - \bki\b
+    - mlops
+    - foundation model
+  - points: 1
+    pattern:
+    - data scientist
+    - scientist
+  title_minus:
+  - points: -5
+    pattern:
+    - ^(?!.*(member of technical staff|senior\s*/\s*(lead|staff)|(lead|staff)\s*/\s*senior)).*\b(head|principal|staff|director|vp|chief|team ?lead|lead|leiter|leitung|manager)\b
+  - points: -4
+    pattern:
+    - werkstudent
+    - working student
+    - praktik
+    - intern\b
+    - internship
+    - thesis
+    - abschlussarbeit
+    - bachelor
+    - master ?arbeit
+  - points: -4
+    pattern:
+    - data analyst
+    - business intelligence
+    - \bbi\b
+    - reporting
+    - controlling
+  - points: -3
+    pattern:
+    - sales
+    - pre-?sales
+    - account
+  - points: -3
+    pattern:
+    - ^(?!.*(machine learning|\bml\b|\bai\b|\bki\b|mlops|\bdata\b|\bdaten)).*(frontend|front-end|devops|platform engineer|sre\b|site reliability|consultant|berater)
+  - points: -2
+    pattern:
+    - java\b
+    - \.net
+    - c#
+    - sap\b
+    - salesforce
+    - php
+  - points: -4
+    pattern:
+    - projektmanager
+    - project manager
+    - projektleiter
+    - coordinator
+    - koordinator
+    - product owner
+    - scrum master
+  desc_plus:
+  - pytorch
+  - tensorflow|keras
+  - yolo|ultralytics
+  - object detection|detection model|segmentation
+  - opencv
+  - onnx|tensorrt|tflite|tensorflow lite|quantis|quantiz|edge device|jetson|on-device
+  - contrastive|self-supervised|representation learning|metric learning
+  - transformer
+  - \brag\b|retrieval
+  - langchain|langgraph|llamaindex|\bagent(s|ic)?\b
+  - hugging ?face
+  - geospatial|satellite|remote sensing|earth observation|drone|aerial|gdal|rasterio
+  - medical imag|radiolog|x-ray|mri|ct scan|patholog
+  - audio|speech|asr|wav2vec|whisper|clap
+  - anomaly detection|time series|sensor data|\bimu\b
+  - reinforcement learning|\brl\b|\bppo\b
+  - mlflow|weights (and|&) biases|wandb
+  - fastapi|docker|kubernetes|\baws\b|\bgcp\b
+  - diffusion|\bgans?\b|generative model
+  - point cloud|lidar|3d vision|pose estimation|tracking
+  desc_plus_cap: 6
+  desc_minus:
+  - points: -5
+    pattern:
+    - \b(8|9|10)\+?\s*(years|jahre)
+    - mindestens (8|9|10) jahre
+  - points: -5
+    pattern:
+    - security clearance
+    - sicherheitsüberprüfung
+    - nato
+    - citizenship required
+  - points: -3
+    pattern:
+    - line management
+    - disziplinarische führung
+    - people management
+    - team lead
+  - points: -2
+    pattern:
+    - \bsap\b
+    - salesforce
+    - power bi
+    - tableau
+  - points: -1
+    pattern:
+    - terraform
+    - helm chart
+    - kubernetes operator
+    - observability stack
+  - points: -1
+    pattern:
+    - typescript
+    - react\b
+    - next\.js
+    - angular
+    - vue\.js
+  - points: -1
+    pattern:
+    - databricks
+    - pyspark
+    - \bspark\b
+    - data lakehouse
+    - dbt\b
+  - points: -2
+    pattern:
+    - publications? (at|in) (top|leading|neurips|icml|cvpr|iclr)
+    - first[- ]author
+    - publication record
+  infra:
+  - fsdp
+  - deepspeed
+  - megatron
+  - \bzero-?[23]\b
+  - slurm
+  - gpu cluster
+  - multi-node
+  - cuda kernel|kernel author|triton kernel
+  - nccl
+  - infiniband
+  infra_min: 2
+  infra_points: -3
+  freshness:
+  - max_days: 1
+    points: 2
+  - max_days: 3
+    points: 1
+  - max_days: 14
+    points: 0
+  freshness_older_points: -1
+  source_bonus:
+    linkedin: 2
+  location_bonus:
+    berlin: 1
+  referral_points: 10
+  referral_min_title_points: 2
+  referral_title:
+  - data scien
+  - machine learning
+  - \bml\b
+  - computer vision
+  - mlops
+  - ai engineer
+  - \bnlp\b
+  - \bllm\b
+
+# How a run reads (added 30 Sep 2026). The point of the radar is applying to a job in the field while
+# its pool of applicants is still small, so the freshest jobs are read first and none of them is left.
+reading:
+  # Read order groups: jobs posted within the first number of days, then within the second, then the
+  # rest. Inside a group, the prescore decides.
+  fresh_first_days:
+  - 1
+  - 3
+  # A candidate posted this many days ago or less must be read in the same run. fresh_check.py lists
+  # any that were not, and the email shows them under "Fresh, not read yet".
+  must_read_days: 2
+  # scripts/read_next.py. A batch is printed whole in one tool result, so it must stay under the size
+  # at which the tool shortens its output. Reading stops this many minutes after collection started.
+  batch_chars: 20000
+  batch_jobs: 6
+  stop_minutes: 80

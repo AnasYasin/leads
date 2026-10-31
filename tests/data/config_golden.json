@@ -1,0 +1,256 @@
+{
+ "filter_run": {
+  "GOOD": {
+   "pattern": "data engineer|analytics engineer|dateningenieur|\\betl\\b|data platform|mlops|machine[- ]?learning|machine-\\s*/|maschinelle[ns]? lernen|\\bml\\b|deep[- ]?learning|computer[- ]?vision|\\bcv\\b|perception|\\bnlp\\b|natural language|\\bllm\\b|generative ai|\\bgenai\\b|applied scientist|research scientist|research engineer|data scientist|\\bai\\b|artificial intelligence|künstliche intelligenz|\\bki[- ]|foundation model|agentic|reinforcement learning|neural|doktorand|phd|promotion|doctoral|vision.language|\\bvla\\b|\\bvlm\\b|voice ai|speech recognition|multimodal|perception engineer|robot(ic)?s? learning|forward[- ]deployed|machine[- ]vision|\\bvision engineer|bildverarbeitung|data[- ]science|datenwissenschaft|\\bki\\b|embodied|diffusion model|\\baudio\\b|\\bspeech\\b|spracherkennung|sprachtechnologie|acoustic|akustik|sound event|speaker (recognition|verification|diarization|identification)|\\btts\\b|text.to.speech|\\basr\\b|music information|voice (assistant|technology|engineer)|geospatial|remote sensing|satellite (image|data)|earth observation|orthomosaic|medical imaging|image analysis|image processing|radiolog|pathology ai|agents?[ -]+(architect|engineer|platform|infra|system|sandbox|orchestrat|runtime|framework|harness|code|tooling|stack)|(\\bai|\\bllm|multi)[ -]*agents?\\b|agents?\\s*(&|and)\\s*automation|wissenschaftliche[rn]? mitarbeiter",
+   "flags": "re.I"
+  },
+  "BAD": {
+   "pattern": "sales|account executive|marketing|recruit|talent (acquisition|attraction|partner|management|scout|sourc)|people ops|customer success|customer support|support engineer|business development|(support|service|call ?cent(er|re)|sales|field|booking|travel|insurance)\\s+agent\\b|kundenberater|servicemitarbeiter|controller|accounting|finance manager|legal counsel|office manager|(product|ux|ui|graphic|grafik|visual|web|interior|fashion|motion|game|kommunikations|mode|industrial)[- ]?designer|copywriter|content (creator|manager|writer|strateg|market|editor|moderat|produc|specialist)|social media|intern(al)? communication|weiterbildung|umschulung|ausbildung zum|umschul|\\bsdr\\b|\\bbdr\\b|partner manager|procurement|\\blogistics (manager|coordinator|specialist)\\b|\\blogistik(er|koordinator|leiter)\\b|mechanic|electrician|technician|monteur|installateur|\\bpflege|krankenpfleg|erzieher|lehrer|verkäufer|\\bfahrer|\\bkoch\\b|kauf(frau|mann)|fach(arzt|ärzt)|oberarzt|\\b(arzt|ärztin)\\b|hörakustik|pädakustik|praktikum im bereich vertrieb",
+   "flags": "re.I"
+  },
+  "NOTWANTED": {
+   "pattern": "business intelligence|\\bbi\\b developer|data analyst|salesforce|power bi|\\bmanager\\b|\\bgtm\\b|founder'?s associate|product owner|product manager|project lead|\\bsales\\b|head of|vp of|vice president|director|chief|principal|staff engineer",
+   "flags": "re.I"
+  },
+  "DATA_FAMILY": {
+   "pattern": "business intelligence|\\bbi\\b developer|data analyst|power bi",
+   "flags": "re.I"
+  },
+  "CORE_ML": {
+   "pattern": "data scien|computer vision|machine learning|deep learning|\\bnlp\\b|\\bllm\\b|\\bml\\b|perception|research (scientist|engineer)|applied scientist|foundation model|multimodal|representation learning|self.supervised|contrastive|segmentation|detection|\\bvlm\\b|\\bvla\\b|generative",
+   "flags": "re.I"
+  },
+  "SENIOR_OUT": {
+   "pattern": "\\b(head|director|vp|chief|principal)\\b|\\bstaff\\s+(engineer|scientist|researcher|developer)\\b",
+   "flags": "re.I"
+  },
+  "JUNK_EMPLOYER": {
+   "pattern": "alfatraining|bildungswerk|akademie|weiterbildung|comcave|wbs training|gfn gmbh|dekra akademie|\\bindeed\\b|umschulung|fortbildung",
+   "flags": "re.I"
+  },
+  "RECRUITER": {
+   "pattern": "randstad|hays|gulp|personaldienst|zeitarbeit|adecco|brunel|ferchau|zeitwert|expertum|piening|personalberatung|personalvermittlung|recruit|headhunt|manpower|orizon|tintschl|\\bdis ag\\b|academic work|michael page|robert half|experis|amoria bond|darwin recruitment|nigel frank|austin fraser|computer futures|progressive recruitment|harvey nash|modis|akkodis|\\bsthree\\b|\\btechminds\\b|foxio|whybrilliant|talent(s)? (partner|solution|hub|network)|staffing",
+   "flags": "re.I"
+  },
+  "PHD_OFF": {
+   "pattern": "doktorand|\\bphd\\b|\\bph\\.d\\b|doctoral|promotionsstelle|\\bpromotion\\b|dissertation|werkstudent|working student|studentische",
+   "flags": "re.I"
+  },
+  "DE_HINT": {
+   "pattern": "germany|deutschland|berlin|münchen|munich|hamburg|köln|cologne|frankfurt|stuttgart|düsseldorf|leipzig|dresden|hannover|nürnberg|nuremberg|bremen|karlsruhe|heidelberg|darmstadt|bonn|aachen|münster|mannheim|freiburg|potsdam|jena|ilmenau|tübingen|regensburg|ulm|kassel|magdeburg|augsburg|mainz|,\\s*de\\b|^\\W*de\\W*$|\\bnrw\\b|bayern|bavaria|baden.w(ü|ue|u)rttemberg|nordrhein.westfalen|north rhine|hessen|hesse|niedersachsen|lower saxony|sachsen|saxony|th(ü|ue|u)ringen|thuringia|brandenburg|schleswig.holstein|rheinland.pfalz|rhineland|saarland|mecklenburg|dortmund|bochum|essen|duisburg|gelsenkirchen|wuppertal|bielefeld|osnabr(ü|ue|u)ck|paderborn|siegen|krefeld|m(ö|oe|o)nchengladbach|oberhausen|leverkusen|neuss|wiesbaden|erlangen|ingolstadt|w(ü|ue|u)rzburg|wolfsburg|braunschweig|g(ö|oe|o)ttingen|kiel|l(ü|ue|u)beck|rostock|oldenburg|chemnitz|halle|erfurt|saarbr(ü|ue|u)cken|koblenz|trier|ludwigshafen|heilbronn|pforzheim|reutlingen|konstanz|offenburg|aalen|oberkochen|garching|gilching|unterschleißheim|eschborn|walldorf|\\bdeu\\b|remote|europe|eu\\b|austria|wien|vienna|graz|netherlands|amsterdam|utrecht|barcelona|madrid|spain|paris|france|belgium|brussels|ghent|stockholm|sweden|denmark|copenhagen|ireland|dublin|poland|warsaw|portugal|lisbon|italy|milan|finland|helsinki|zurich|switzerland",
+   "flags": "re.I"
+  },
+  "OUT_OF_SCOPE": {
+   "pattern": "\\b(london|united kingdom|\\buk\\b|new york|san francisco|palo alto|menlo park|seattle|boston|austin|toronto|canada|india|bangalore|singapore|tokyo|sydney|australia|dubai|tel aviv|israel|brazil|mexico|zürich|zurich|kyiv|ukraine|belgrade|serbia|istanbul|turkey|usa|united states)\\b",
+   "flags": "re.I"
+  },
+  "ANYWHERE": {
+   "pattern": "^\\W*(world|worldwide|earth|global|globe|anywhere|international)\\W*$",
+   "flags": "re.I"
+  },
+  "cands": [],
+  "phd_off": [],
+  "ba_keep": [],
+  "ats_keep": [],
+  "ge_keep": [],
+  "ta_keep": [],
+  "an_keep": [],
+  "li_keep": [],
+  "xi_keep": [],
+  "ss_keep": [],
+  "read_today": [],
+  "TITLE_NOISE_DROP": {
+   "pattern": "\\b(werkstudent\\w*|working student|duales? studium|dualer student|ausbildung|azubi|auszubildende\\w*|abschlussarbeit|masterarbeit|bachelorarbeit|master'?s thesis|bachelor'?s thesis|thesis|techniker\\w*|elektroniker\\w*|mechatroniker\\w*|elektriker\\w*|monteur\\w*|arzt|ärztin|aerztin|fachärzt\\w*|facharzt\\w*|radiolog\\w*|pflegefach\\w*|krankenpfleg\\w*|mta-?f?|sachbearbeiter\\w*|buchhalt\\w*|steuerfach\\w*|lehrer\\w*|erzieher\\w*|verkäufer\\w*|kassierer\\w*|fahrer\\w*|lagerist\\w*)\\b",
+   "flags": "re.I"
+  },
+  "TITLE_FIELD": {
+   "pattern": "\\b(ai|ki|ml|machine learning|maschinelles lernen|deep learning|data|daten|computer vision|llm|nlp|neural|künstliche intelligenz|kuenstliche intelligenz|algorithm|phd)\\b|ki-|-ki\\b",
+   "flags": "re.I"
+  }
+ },
+ "prescore": {
+  "ML_WORD": "machine learning|\\bml\\b|deep learning|\\bai\\b|\\bki\\b|research|scientist|algorithm|neural|data science",
+  "T_SPECIFIC": "computer vision|\\bcv engineer|perception|point cloud|lidar|\\bslam\\b|robot learning|speech recognition|\\basr\\b|voice ai|audio ml|speech ai",
+  "T_GENERIC": "\\bvision\\b|\\bimage|\\bimaging\\b|\\bvideo\\b|\\b3d\\b|\\baudio\\b|\\bspeech\\b|\\bvoice\\b|\\bacoustic|\\bsound\\b|\\bmusic\\b",
+  "T_PLUS": [
+   [
+    3,
+    "machine learning|\\bml\\b|deep learning|maschinelles lernen|ki-entwickler|ki entwickler"
+   ],
+   [
+    3,
+    "research engineer|research scientist|applied scientist|applied ai|forschung"
+   ],
+   [
+    3,
+    "\\bnlp\\b|\\bllm\\b|genai|generative|agentic|\\bai\\b|\\bki\\b|mlops|foundation model"
+   ],
+   [
+    1,
+    "data scientist|scientist"
+   ]
+  ],
+  "T_MINUS": [
+   [
+    -5,
+    "^(?!.*(member of technical staff|senior\\s*/\\s*(lead|staff)|(lead|staff)\\s*/\\s*senior)).*\\b(head|principal|staff|director|vp|chief|team ?lead|lead|leiter|leitung|manager)\\b"
+   ],
+   [
+    -4,
+    "werkstudent|working student|praktik|intern\\b|internship|thesis|abschlussarbeit|bachelor|master ?arbeit"
+   ],
+   [
+    -4,
+    "data analyst|business intelligence|\\bbi\\b|reporting|controlling"
+   ],
+   [
+    -3,
+    "sales|pre-?sales|account"
+   ],
+   [
+    -3,
+    "^(?!.*(machine learning|\\bml\\b|\\bai\\b|\\bki\\b|mlops|\\bdata\\b|\\bdaten)).*(frontend|front-end|devops|platform engineer|sre\\b|site reliability|consultant|berater)"
+   ],
+   [
+    -2,
+    "java\\b|\\.net|c#|sap\\b|salesforce|php"
+   ],
+   [
+    -4,
+    "projektmanager|project manager|projektleiter|coordinator|koordinator|product owner|scrum master"
+   ]
+  ],
+  "D_PLUS": [
+   "pytorch",
+   "tensorflow|keras",
+   "yolo|ultralytics",
+   "object detection|detection model|segmentation",
+   "opencv",
+   "onnx|tensorrt|tflite|tensorflow lite|quantis|quantiz|edge device|jetson|on-device",
+   "contrastive|self-supervised|representation learning|metric learning",
+   "transformer",
+   "\\brag\\b|retrieval",
+   "langchain|langgraph|llamaindex|\\bagent(s|ic)?\\b",
+   "hugging ?face",
+   "geospatial|satellite|remote sensing|earth observation|drone|aerial|gdal|rasterio",
+   "medical imag|radiolog|x-ray|mri|ct scan|patholog",
+   "audio|speech|asr|wav2vec|whisper|clap",
+   "anomaly detection|time series|sensor data|\\bimu\\b",
+   "reinforcement learning|\\brl\\b|\\bppo\\b",
+   "mlflow|weights (and|&) biases|wandb",
+   "fastapi|docker|kubernetes|\\baws\\b|\\bgcp\\b",
+   "diffusion|\\bgans?\\b|generative model",
+   "point cloud|lidar|3d vision|pose estimation|tracking"
+  ],
+  "D_MINUS": [
+   [
+    -5,
+    "\\b(8|9|10)\\+?\\s*(years|jahre)|mindestens (8|9|10) jahre"
+   ],
+   [
+    -5,
+    "security clearance|sicherheitsüberprüfung|nato|citizenship required"
+   ],
+   [
+    -3,
+    "line management|disziplinarische führung|people management|team lead"
+   ],
+   [
+    -2,
+    "\\bsap\\b|salesforce|power bi|tableau"
+   ],
+   [
+    -1,
+    "terraform|helm chart|kubernetes operator|observability stack"
+   ],
+   [
+    -1,
+    "typescript|react\\b|next\\.js|angular|vue\\.js"
+   ],
+   [
+    -1,
+    "databricks|pyspark|\\bspark\\b|data lakehouse|dbt\\b"
+   ],
+   [
+    -2,
+    "publications? (at|in) (top|leading|neurips|icml|cvpr|iclr)|first[- ]author|publication record"
+   ]
+  ],
+  "INFRA": [
+   "fsdp",
+   "deepspeed",
+   "megatron",
+   "\\bzero-?[23]\\b",
+   "slurm",
+   "gpu cluster",
+   "multi-node",
+   "cuda kernel|kernel author|triton kernel",
+   "nccl",
+   "infiniband"
+  ]
+ },
+ "collect_linkedin": {
+  "UA": {
+   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+   "Accept-Language": "en-US,en;q=0.9,de;q=0.8"
+  },
+  "PAGE": 25,
+  "MAX_START": 100,
+  "CARD": {
+   "pattern": "data-entity-urn=\"urn:li:jobPosting:(\\d+)\"(.*?)(?=data-entity-urn=|\\Z)",
+   "flags": "re.S"
+  },
+  "TITLE": {
+   "pattern": "base-search-card__title\">\\s*(.*?)\\s*<",
+   "flags": "re.S"
+  },
+  "COMPANY": {
+   "pattern": "base-search-card__subtitle\">\\s*(?:<a[^>]*>)?\\s*(.*?)\\s*<",
+   "flags": "re.S"
+  },
+  "LOC": {
+   "pattern": "job-search-card__location\">\\s*(.*?)\\s*<",
+   "flags": "re.S"
+  },
+  "DATE": {
+   "pattern": "<time[^>]*datetime=\"([^\"]+)\"",
+   "flags": ""
+  },
+  "URL": {
+   "pattern": "href=\"(https://[^\"?]+)",
+   "flags": ""
+  }
+ },
+ "collect_getro": {
+  "HDR": {
+   "Accept": "application/json",
+   "Content-Type": "application/json",
+   "User-Agent": "Mozilla/5.0"
+  },
+  "COLLECTIONS": [
+   [
+    1680,
+    "Point Nine"
+   ],
+   [
+    617,
+    "Earlybird"
+   ],
+   [
+    44081,
+    "Cherry Ventures"
+   ],
+   [
+    234,
+    "HV Capital"
+   ],
+   [
+    9233,
+    "Merantix AI Campus"
+   ]
+  ]
+ },
+ "_changes": [
+  "2026-09-30 (the candidate): data engineering and anything AI or ML related stays. GOOD gains data engineer, analytics engineer, dateningenieur, etl, data platform, mlops. NOTWANTED loses data engineer and analytics engineer, and devops, platform engineer, sre, frontend, consultant, consulting, transformation and solutions architect move to filters.not_wanted_unless_ai (out only when the title names no AI, ML or data work). DATA_FAMILY loses data engineer and analytics engineer. T_MINUS: analytics engineer loses its -4, the data engineer -3 is gone, and the -3 on frontend, devops, platform, sre, consultant and berater applies only to titles with no AI, ML or data word."
+ ]
+}
