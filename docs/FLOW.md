@@ -176,6 +176,10 @@ applications missing from `state/applications.md` are added there and merged to 
 
 ## The laptop side
 
+`python3 scripts/store.py` builds `store/jobs.db` from the repository files (jobs, runs, companies, applications,
+decisions, rejected) with an `open_jobs` view; it is derived and not committed. The rest of this section is one
+person's own laptop tooling and is not part of the template.
+
 `~/job_hunt/scripts/pick.py` is the bridge. Every call pulls this repo first and pushes
 `state/applications.md` back when it changed.
 

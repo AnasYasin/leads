@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .pick_last.json
 .claude/settings.local.json
+store/

@@ -15,7 +15,10 @@ or push.
 
 Every run pushes its results into this repository, and that is the store: `shortlists/<date>-<slot>.md`
 and `.json`, one pack per sent job under `jobs/` with `jobs/index.json`, and `companies/*.json`.
-`reports/LATEST.md` always holds the newest two runs. Nothing is sent anywhere by default.
+`reports/LATEST.md` always holds the newest two runs. Nothing is sent anywhere by default. On a laptop,
+`python3 scripts/store.py` after a pull builds `store/jobs.db`, a SQLite file with every sent job, its full
+description, its applied status from `state/applications.md` and the days since it was posted; the
+`open_jobs` view is the list to apply from. `--check` re-checks each open link and records live or gone.
 
 Email over Gmail is optional. It runs only when two repository secrets exist, under Settings,
 Secrets and variables, Actions: `GMAIL_ADDRESS`, the Gmail address that sends and receives, and

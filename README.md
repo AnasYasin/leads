@@ -17,7 +17,8 @@ sort what is left freshest first. The agent then does three things only. It skim
 drops the plainly wrong ones, it reads every remaining posting and gives each a score and a gate, and
 it researches the ones it will send: the employer's own apply link, a company note, a headcount.
 Scripts check the agent's picks for missed repeats and language lines, render the shortlist and the
-per-job packs, and push. The repository is the store the person works from. Email is optional.
+per-job packs, and push. The repository is the store the person works from: `python3 scripts/store.py` turns it into one SQLite file
+with every sent job, its text, its applied status and the freshness of its posting. Email is optional.
 
 The repository is the agent's memory. Every job sent, every job read with its verdict and every
 hard rejection are kept under `state/` so no run repeats another's work.
@@ -42,7 +43,8 @@ hard rejection are kept under `state/` so no run repeats another's work.
 | `config/radar.yaml` | search words, title and place filters, ranking weights |
 | `scripts/` | collectors, filter, reader, verdict, render, push |
 | `state/` | the memory carried between runs; empty in this copy |
-| `shortlists/`, `jobs/`, `companies/` | the runs' outputs; empty in this copy |
+| `shortlists/`, `jobs/`, `companies/` | the runs' outputs, the store; empty in this copy |
+| `scripts/store.py` | builds `store/jobs.db`, a local SQLite view of the store, with an `open_jobs` view |
 | `docs/FLOW.md`, `docs/SECURITY.md`, `docs/DEPLOY.md` | the flow, what a run can reach, how to deploy |
 | `tests/` | `make ci` runs them; the routine never edits code |
 
