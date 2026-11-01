@@ -17,8 +17,7 @@ sort what is left freshest first. The agent then does three things only. It skim
 drops the plainly wrong ones, it reads every remaining posting and gives each a score and a gate, and
 it researches the ones it will send: the employer's own apply link, a company note, a headcount.
 Scripts check the agent's picks for missed repeats and language lines, render the shortlist and the
-per-job packs, and push. The push makes a GitHub Action open one issue with the run: the queue the person
-reads, closed when read. Email is optional.
+per-job packs, and push. The repository is the store the person works from. Email is optional.
 
 The repository is the agent's memory. Every job sent, every job read with its verdict and every
 hard rejection are kept under `state/` so no run repeats another's work.

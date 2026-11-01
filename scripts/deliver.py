@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
-"""What a run delivers: the part of the shortlist above the cut, as the body of a GitHub issue.
-
-Added 1 Nov 2026 in place of Gmail. The queue the person reads is the repository's open issues
-with the `shortlist` label: one issue per run, opened by .github/workflows/deliver.yml with the
-Action's own token, so no secret is needed. GitHub notifies the person the way they already
-chose for the repository. Closing the issue is how a run is marked read. scripts/inbox.py lists,
-shows and closes them from a laptop. Email over Gmail (scripts/send_mail.py) still works when
-the two secrets are set, as an extra, never as the only path.
+"""The part of a shortlist above the cut, and when nothing should go out. One rule, used by
+scripts/send_mail.py (optional email). The store the person works from is the repository itself:
+shortlists/<date>-<slot>.json, jobs/<id>.md with jobs/index.json, companies/*.json.
 
     python3 scripts/deliver.py [--raw] <shortlist.md> [--out <body file>]
 
-Prints the issue title on stdout, or SKIP for a noon run with nothing in it. Writes the body to
-`--out` when given, else to stdout after the title. --raw keeps the whole file (a correction).
+Prints the title on stdout, or SKIP for a noon run with nothing in it. Writes the body to `--out`
+when given, else to stdout after the title. --raw keeps the whole file (a correction).
 """
 import json
 import re

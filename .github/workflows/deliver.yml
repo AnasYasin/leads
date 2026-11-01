@@ -1,9 +1,8 @@
 name: Deliver shortlist
 
 # The radar agent pushes a new file into shortlists/. This rebuilds reports/LATEST.md so it holds
-# the newest two runs, then opens one GitHub issue with the newest run: the queue the person reads
-# (scripts/deliver.py, scripts/inbox.py). No secret is needed for that. Email over Gmail is an
-# extra and runs only when the two secrets exist.
+# the newest two runs. The repository is the store: shortlists/, jobs/ and companies/ grow with
+# every run. Email over Gmail is an extra and runs only when the two secrets exist.
 
 on:
   push:
@@ -14,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: deliver
@@ -74,29 +72,7 @@ jobs:
           NEWEST: ${{ steps.build.outputs.newest }}
         run: echo "path=$(python3 scripts/correction.py "$NEWEST" || true)" >> "$GITHUB_OUTPUT"
 
-      # The queue. One issue per run, labelled `shortlist`; closing it marks the run read. Guarded
-      # on `newest` so a failed build step cannot open an empty issue.
-      - name: Open the shortlist issue
-        if: always() && steps.build.outputs.newest != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          NEWEST: ${{ steps.build.outputs.newest }}
-          CORRECTION: ${{ steps.corr.outputs.path }}
-        run: |
-          if [ -n "$CORRECTION" ] && [ -f "$CORRECTION" ]; then
-            title=$(python3 scripts/deliver.py --raw "$CORRECTION" --out "$RUNNER_TEMP/body.md")
-          else
-            title=$(python3 scripts/deliver.py "$NEWEST" --out "$RUNNER_TEMP/body.md")
-          fi
-          if [ "$title" = "SKIP" ]; then
-            echo "nothing to deliver: a noon run with no job, no fit-6 line and no borderline line"
-            exit 0
-          fi
-          gh label create shortlist --description "A run of the job radar, open until read" --color 0E8A16 --force
-          gh issue create --title "$title" --body-file "$RUNNER_TEMP/body.md" --label shortlist
-
-      # Extra, only when the two Gmail secrets are set (docs/DEPLOY.md).
+      # Optional, only when the two Gmail secrets are set (docs/DEPLOY.md).
       - name: Email the newest run
         if: always() && steps.build.outputs.newest != '' && env.GMAIL_ADDRESS != ''
         env:

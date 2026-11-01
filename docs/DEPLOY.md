@@ -11,19 +11,16 @@ Install the Claude GitHub app on that repository: github.com/apps/claude, grant 
 repository. Authorising the app is not enough; it has to be installed, or the routine cannot clone
 or push.
 
-## 2. The queue
+## 2. Delivery
 
-Every run ends with one GitHub issue in this repository, labelled `shortlist`, opened by the Action
-in `.github/workflows/deliver.yml` on every push into `shortlists/`. The open issues are the runs
-not read yet; closing one marks it read. No secret is needed, the Action uses its own token. Turn
-on notifications for the repository (Watch, Custom, Issues) to get each run by email or in the
-GitHub app, and from a laptop `python3 scripts/inbox.py` lists, shows and closes them with the
-GitHub CLI.
+Every run pushes its results into this repository, and that is the store: `shortlists/<date>-<slot>.md`
+and `.json`, one pack per sent job under `jobs/` with `jobs/index.json`, and `companies/*.json`.
+`reports/LATEST.md` always holds the newest two runs. Nothing is sent anywhere by default.
 
-Email over Gmail is an extra. It runs only when two repository secrets exist, under Settings,
+Email over Gmail is optional. It runs only when two repository secrets exist, under Settings,
 Secrets and variables, Actions: `GMAIL_ADDRESS`, the Gmail address that sends and receives, and
-`GMAIL_APP_PASSWORD`, an app password for that account. Leave both unset to have no email at all.
-Nothing else sends mail. The cloud run never has mail access.
+`GMAIL_APP_PASSWORD`, an app password for that account. Nothing else sends mail. The cloud run never
+has mail access.
 
 ## 3. The routines
 
@@ -62,7 +59,7 @@ Run the morning routine once by hand from its page. Then check three things.
 
 1. A commit `Job radar, <date> morning, <n> new` arrived in the repository, with
    `shortlists/<date>-morning.md`.
-2. The Deliver shortlist Action ran green and an issue labelled `shortlist` is open with the run.
+2. The Deliver shortlist Action ran green and `reports/LATEST.md` holds the run.
 3. The part of the shortlist file below `## Run details` names every source with a row count, and
    the `Source health` block has no `SOURCE ZERO` line. A source at zero on the first run is usually a
    blocked network egress; the environment's network setting must allow the job sites.

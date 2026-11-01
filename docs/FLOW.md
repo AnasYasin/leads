@@ -146,9 +146,8 @@ the candidate's table in `scripts/salary.py` when the posting names no figure.
 ### 6. Push and deliver
 
 `python3 scripts/gitsync.py push -A -m "Job radar, <date> <slot>, <n> new"` commits everything and
-pushes. A push that touches `shortlists/` starts `deliver.yml`, which rebuilds `reports/LATEST.md` and opens one
-GitHub issue with the newest shortlist (`deliver.py`), the queue the person reads. `send_mail.py` runs too when
-the Gmail secrets are set.
+pushes. A push that touches `shortlists/` starts `deliver.yml`, which rebuilds `reports/LATEST.md` and, when the
+Gmail secrets are set, emails the newest shortlist through `send_mail.py`.
 
 ### 7. Evening only: the mailbox
 
