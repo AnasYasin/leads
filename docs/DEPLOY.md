@@ -17,7 +17,7 @@ Every run ends with one GitHub issue in this repository, labelled `shortlist`, o
 in `.github/workflows/deliver.yml` on every push into `shortlists/`. The open issues are the runs
 not read yet; closing one marks it read. No secret is needed, the Action uses its own token. Turn
 on notifications for the repository (Watch, Custom, Issues) to get each run by email or in the
-GitHub app, and from a laptop `python3 scripts/queue.py` lists, shows and closes them with the
+GitHub app, and from a laptop `python3 scripts/inbox.py` lists, shows and closes them with the
 GitHub CLI.
 
 Email over Gmail is an extra. It runs only when two repository secrets exist, under Settings,

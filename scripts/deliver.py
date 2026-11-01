@@ -4,7 +4,7 @@
 Added 1 Nov 2026 in place of Gmail. The queue the person reads is the repository's open issues
 with the `shortlist` label: one issue per run, opened by .github/workflows/deliver.yml with the
 Action's own token, so no secret is needed. GitHub notifies the person the way they already
-chose for the repository. Closing the issue is how a run is marked read. scripts/queue.py lists,
+chose for the repository. Closing the issue is how a run is marked read. scripts/inbox.py lists,
 shows and closes them from a laptop. Email over Gmail (scripts/send_mail.py) still works when
 the two secrets are set, as an extra, never as the only path.
 

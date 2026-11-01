@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The shortlist queue from a laptop: the repository's open issues with the `shortlist` label.
 
-    python3 scripts/queue.py            list the unread runs, newest first
-    python3 scripts/queue.py <n>        print one run's shortlist
-    python3 scripts/queue.py done <n>   close it: the run is read
+    python3 scripts/inbox.py            list the unread runs, newest first
+    python3 scripts/inbox.py <n>        print one run's shortlist
+    python3 scripts/inbox.py done <n>   close it: the run is read
 
 Needs the GitHub CLI (`gh`) logged in. The repository is the one this file lives in, read from
 its git remote by gh. The same queue is the Issues tab on GitHub and the notifications GitHub

@@ -2,7 +2,7 @@ name: Deliver shortlist
 
 # The radar agent pushes a new file into shortlists/. This rebuilds reports/LATEST.md so it holds
 # the newest two runs, then opens one GitHub issue with the newest run: the queue the person reads
-# (scripts/deliver.py, scripts/queue.py). No secret is needed for that. Email over Gmail is an
+# (scripts/deliver.py, scripts/inbox.py). No secret is needed for that. Email over Gmail is an
 # extra and runs only when the two secrets exist.
 
 on:
