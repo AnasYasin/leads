@@ -1,34 +1,19 @@
 #!/usr/bin/env python3
-"""Email one shortlist file over Gmail SMTP.
+"""Email one shortlist file over Gmail SMTP. Optional since 1 Nov 2026: the queue is the GitHub
+issue deliver.yml opens (scripts/deliver.py); this runs only when the two secrets are set.
 
 Credentials come from the GMAIL_ADDRESS and GMAIL_APP_PASSWORD repository
 secrets. A normal Google password will not work, it has to be an app password.
 """
 
 import os
-import re
 import smtplib
 import sys
 from email.message import EmailMessage
 from pathlib import Path
 
-
-def subject_for(path, body):
-    first = body.lstrip().splitlines()[0] if body.strip() else ""
-    if first.startswith("#"):
-        return first.lstrip("#").strip()
-    stem = Path(path).stem
-    return f"Job radar, {stem}"
-
-
-def empty_noon(path):
-    """True for a noon shortlist that has nothing for him: no job, no fit-6 line, no borderline line."""
-    import json
-    try:
-        d = json.loads(Path(str(path)[:-3] + ".json").read_text())
-    except (OSError, ValueError):
-        return False
-    return d.get("slot") == "noon" and not any(d.get(k) for k in ("jobs", "also_found", "borderline"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from deliver import body_for, empty_noon, title_for  # noqa: E402, F401  (one cut rule for the issue and the email)
 
 
 def main():
@@ -53,30 +38,13 @@ def main():
         print("GMAIL_ADDRESS or GMAIL_APP_PASSWORD is not set", file=sys.stderr)
         return 1
 
-    body = path.read_text()
-
-    # The rejected section is for auditing the scoring later, not for the inbox.
-    #
-    # This pattern used to require exactly two hashes, and that silently failed open:
-    # a run that wrote "# Rejected" instead of "## Rejected" mailed its entire rejection
-    # audit to the candidate. Checked on 28 August 2026 evening, **11 of the previous 17 runs did
-    # exactly that**, roughly doubling the length of those emails. The heading level is
-    # incidental formatting, so match any of them, tolerate trailing punctuation and
-    # case, and strip any horizontal rules left dangling above the split point.
-    if not raw:
-        # 2 Oct 2026: the noon run found 0 jobs on 1 Oct and 1 on 2 Oct and mailed both. A noon run with
-        # nothing to show sends nothing (the candidate). The file is still written and reports/LATEST.md still rolls.
-        if empty_noon(path):
-            print(f"not sent: {path} is a noon run with no job to send, no fit-6 line and no borderline line")
-            return 0
-        # Everything from "Run details" down is kept in the file and left out of the email
-        # (write_pack.py, docs/PROBLEMS.md 6.1). Older files have no such heading and are cut at "Rejected".
-        body = re.split(r"^\s{0,3}#{1,6}\s+(?:Run details|Rejected)\b.*$", body, flags=re.M | re.I)[0]
-        body = re.sub(r"(?:^\s*(?:-{3,}|\*{3,}|_{3,})\s*$\s*)+\Z", "", body, flags=re.M)
-    body = body.rstrip()
+    body = body_for(path, raw)
+    if body is None:
+        print(f"not sent: {path} is a noon run with no job to send, no fit-6 line and no borderline line")
+        return 0
 
     msg = EmailMessage()
-    msg["Subject"] = subject_for(path, body)
+    msg["Subject"] = title_for(path, body)
     msg["From"] = address
     msg["To"] = address
     msg.set_content(body)

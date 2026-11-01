@@ -1,6 +1,6 @@
 # job-radar
 
-A scheduled cloud agent that finds jobs for one person and emails a ranked shortlist twice a day,
+A scheduled cloud agent that finds jobs for one person and delivers a ranked shortlist twice a day,
 with a third run on Monday and Thursday that clears the unread backlog. It finds and ranks. It never
 applies.
 
@@ -16,8 +16,9 @@ Scripts collect from every source, filter by title, place, repeats and the perso
 sort what is left freshest first. The agent then does three things only. It skims the titles and
 drops the plainly wrong ones, it reads every remaining posting and gives each a score and a gate, and
 it researches the ones it will send: the employer's own apply link, a company note, a headcount.
-Scripts check the agent's picks for missed repeats and language lines, render the email and the
-per-job packs, and push. The push sends the email through a GitHub Action.
+Scripts check the agent's picks for missed repeats and language lines, render the shortlist and the
+per-job packs, and push. The push makes a GitHub Action open one issue with the run: the queue the person
+reads, closed when read. Email is optional.
 
 The repository is the agent's memory. Every job sent, every job read with its verdict and every
 hard rejection are kept under `state/` so no run repeats another's work.
@@ -29,7 +30,7 @@ hard rejection are kept under `state/` so no run repeats another's work.
 2. Open Claude Code in it and say anything. `CLAUDE.md` makes the first session run the setup: it asks
    for the CV and everything else it needs, fills `config/person.md`, generates the profile, the search
    lists and the salary table from it, and stops when `python3 scripts/setup_check.py` prints `READY`.
-3. Follow `docs/DEPLOY.md`: the GitHub app, the delivery secrets, two routines.
+3. Follow `docs/DEPLOY.md`: the GitHub app, two routines. No mail secrets unless you want email too.
 
 ## Layout
 
@@ -50,4 +51,4 @@ hard rejection are kept under `state/` so no run repeats another's work.
 
 The agent may not change code during a run. A verdict is refused by the scripts when it breaks a
 rule, a job the reader never printed cannot be sent, and the render refuses a list with an unread
-fresh job or a missed repeat. The email goes out once per run, from the Action, never from the agent.
+fresh job or a missed repeat. The shortlist goes out once per run, from the Action, never from the agent.

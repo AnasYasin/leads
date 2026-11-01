@@ -103,8 +103,8 @@ def test_an_empty_noon_run_is_not_mailed(tmp_path):
 
 def test_the_email_stops_before_the_run_details():
     import re
-    src = open(os.path.join(os.path.dirname(SM.__file__), "send_mail.py")).read()
-    rx = re.search(r're\.split\(r"(.+?)", body', src).group(1).replace("\\\\", "\\")
+    import deliver
+    rx = deliver.CUT.pattern            # the one cut rule, shared by the issue and the email (1 Nov 2026)
     body = "# Job radar\n\n1. **A job**\n\nRead in full: 40 of 45.\n\n## Run details\n\n### Source coverage\n\n## Rejected\n\n- x"
     assert re.split(rx, body, flags=re.M | re.I)[0].rstrip().endswith("Read in full: 40 of 45.")
     old = "# Job radar\n\n1. **A job**\n\n## Source coverage\n\n## Rejected\n\n- x"

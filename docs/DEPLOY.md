@@ -11,14 +11,18 @@ Install the Claude GitHub app on that repository: github.com/apps/claude, grant 
 repository. Authorising the app is not enough; it has to be installed, or the routine cannot clone
 or push.
 
-## 2. The email
+## 2. The queue
 
-The shortlist is sent by the GitHub Action in `.github/workflows/deliver.yml` on every push into
-`shortlists/`. It needs two repository secrets, under Settings, Secrets and variables, Actions:
+Every run ends with one GitHub issue in this repository, labelled `shortlist`, opened by the Action
+in `.github/workflows/deliver.yml` on every push into `shortlists/`. The open issues are the runs
+not read yet; closing one marks it read. No secret is needed, the Action uses its own token. Turn
+on notifications for the repository (Watch, Custom, Issues) to get each run by email or in the
+GitHub app, and from a laptop `python3 scripts/queue.py` lists, shows and closes them with the
+GitHub CLI.
 
-- `GMAIL_ADDRESS`: the Gmail address that sends and receives the email.
-- `GMAIL_APP_PASSWORD`: an app password for that account (Google account, Security, App passwords).
-
+Email over Gmail is an extra. It runs only when two repository secrets exist, under Settings,
+Secrets and variables, Actions: `GMAIL_ADDRESS`, the Gmail address that sends and receives, and
+`GMAIL_APP_PASSWORD`, an app password for that account. Leave both unset to have no email at all.
 Nothing else sends mail. The cloud run never has mail access.
 
 ## 3. The routines
@@ -58,7 +62,7 @@ Run the morning routine once by hand from its page. Then check three things.
 
 1. A commit `Job radar, <date> morning, <n> new` arrived in the repository, with
    `shortlists/<date>-morning.md`.
-2. The Deliver shortlist Action ran green and the email arrived.
+2. The Deliver shortlist Action ran green and an issue labelled `shortlist` is open with the run.
 3. The part of the shortlist file below `## Run details` names every source with a row count, and
    the `Source health` block has no `SOURCE ZERO` line. A source at zero on the first run is usually a
    blocked network egress; the environment's network setting must allow the job sites.
