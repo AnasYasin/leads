@@ -22,7 +22,7 @@ import datetime, json, os, re, subprocess, sys, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from jobid import canonical_id, is_repeat, same_company, company_tokens
+from jobid import canonical_id, is_repeat, company_tokens
 from board_date import true_date
 import company_cache
 import cfg

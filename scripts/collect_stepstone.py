@@ -14,7 +14,7 @@ Verified 8 Sep 2026 with three probe routines:
 
 Usage: collect_stepstone.py <out.json> [days]     (days defaults to 3)
 """
-import datetime, html, json, re, sys, time, urllib.parse, urllib.request
+import datetime, json, re, sys, time, urllib.parse, urllib.request
 import concurrent.futures as cf
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "

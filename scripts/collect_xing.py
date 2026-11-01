@@ -42,14 +42,6 @@ def fetch(url):
         return r.read().decode("utf-8", "replace")
 
 
-def unesc(s):
-    # page-state strings are JSON-escaped: < for <, / for /
-    try:
-        return json.loads('"' + s + '"')
-    except Exception:
-        return s.replace("\\u003C", "<").replace("\\u002F", "/").replace("\\u003E", ">")
-
-
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from textclean import html_to_text, join_html  # noqa: E402

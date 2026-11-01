@@ -25,7 +25,7 @@ a deleted job is still never sent twice. The file is gone from the tree but stay
     python3 scripts/prune_packs.py <scratch>          check, strike, delete
     python3 scripts/prune_packs.py <scratch> --dry    check and report, change nothing
 """
-import datetime, json, os, re, sys
+import datetime, json, os, sys
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +34,6 @@ from jobid import is_repeat, same_company, same_role  # noqa: E402
 from applications import applied as applied_rows  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
-STATE = os.path.join(ROOT, "state/prune.json")
 MIN_AGE = 3  # 29 Oct 2026: was 20, which never touched his 14-day batch backlog
 EVERY_DAYS = 2  # 29 Oct 2026, the candidate: the backlog refresh runs every second evening, not daily
 STRIKE_GAP = 1
