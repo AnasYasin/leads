@@ -6,7 +6,7 @@ The shipped list is German AI and ML employers, weighted towards Berlin startups
 
 ## Berlin startups — poll these first
 
-join | ai-coustics | ai |
+join | ai-coustics | ai | Berlin speech enhancement SDK, audio ML |
 join | omnisent | Omnisent |
 join | handly | handly |
 join | esri | Esri (R&D Center Stuttgart) |
@@ -61,11 +61,11 @@ greenhouse | solarisbank | Solaris |
 
 greenhouse | bluefishai | Bluefish (Bluefish Labs) |
 recruitee | nucsai | Nucs AI |
-personio_html | alpas-gmbh | Alpas |
+personio_html | alpas-gmbh | Alpas | slug is `alpas-gmbh`; /xml 404s, HTML board works |
 personio | liveeo-gmbh | LiveEO |
 ashby | integral-de | Integral |
 
-ashby | almedia | Almedia |
+ashby | almedia | Almedia | Berlin adtech, bootstrapped, 53 jobs, growing its ML org |
 
 join | motor-ai | MOTOR Ai |
 personio | mercanis | Mercanis |
@@ -79,18 +79,18 @@ join | xheroncom | xHeron Solutions |
 personio_html | lime | LIME medical |
 
 greenhouse | mitratech | Mitratech |
-greenhouse | smartlyio | Smartly (smartly.io) |
+greenhouse | smartlyio | Smartly (smartly.io) | 79 jobs; AI Platform team posts per city |
 personio | nc-group | NET CHECK / NC GROUP |
 recruitee | makersitegmbh | Makersite |
 teamtailor_feed | shine | Shine |
 personio | codecentric | codecentric |
-personio | enocean | EnOcean |
-ashby | avelios-medical | Avelios Medical |
+personio_html | enocean | EnOcean | the Personio API 404s; only the HTML board answers (3 jobs, 1 Nov 2026) |
+ashby | avelios-medical | Avelios Medical | note the `-medical`; plain `avelios` 404s |
 ashby | hawk | Hawk |
 ashby | atira | Atira |
-join | datacept | Datacept |
-join | kausableai | kausable |
-join | lucidlabs | Lucid Labs |
+join | datacept | Datacept | RF/SIGINT ML, Hamburg, pre-seed, 1-10 people |
+join | kausableai | kausable | causal world models, Heidelberg, EUR12M seed |
+join | lucidlabs | Lucid Labs | Berlin agent studio for the Mittelstand, 5 jobs |
 ashby | sereact | Sereact |
 greenhouse | clariness | Clariness |
 ashby | tactiliarobotics | TACTILIA Robotics |
@@ -100,7 +100,7 @@ ashby | amber | amber |
 ashby | nexxa | Nexxa.AI |
 ashby | proxima-fusion | Proxima Fusion |
 recruitee | rebuy | rebuy |
-personio | imfusion | ImFusion |
+personio | imfusion | ImFusion | Munich medical image computing, 4 positions |
 join | mynejocom | Nejo |
 join | digitl | Digitl |
 join | vicoland | Vicoland |
@@ -124,7 +124,7 @@ personio | stark | STARK (SKD SE) |
 
 personio | spread-gmbh | SPREAD |
 
-recruitee | quantum-systems | Quantum-Systems |
+recruitee_custom | career.quantum-systems.com | Quantum-Systems | own host; `recruitee/quantum-systems` 404s (201 jobs, 1 Nov 2026) |
 
 greenhouse | arxroboticsgmbh | ARX Robotics |
 
@@ -195,7 +195,7 @@ pinpoint | careers.osapiens.com | osapiens |
 
 hirehive | luma-vision | LUMA Vision |
 greenhouse | navvis | NavVis |
-personio | credium | credium |
+personio | credium | credium | geospatial CV, Augsburg, 5 jobs |
 workable | enjins | Enjins |
 personio | nc-group | NC GROUP / NET CHECK GmbH |
 ashby | poolside | poolside |
@@ -221,15 +221,15 @@ gem | senndertechnologies-gmbh | sennder |
 greenhouse | jetbrains | JetBrains |
 join | dexter-health | dexter health |
 
-personio | peter-park | Peter Park |
-join | zalionai | Zalion |
+personio | peter-park | Peter Park | note the hyphen; `peterpark` is not the board |
+join | zalionai | Zalion | note the `ai` suffix; `zalion` 404s everywhere |
 
 greenhouse | sumup | SumUp |
 greenhouse | soundcloud71 | SoundCloud |
 greenhouse | caronsale | CarOnSale |
 
-ashby | cohere | Cohere |
-ashby | airapps | Air Apps |
+ashby | cohere | Cohere | enterprise foundation models, Berlin office, 146 jobs |
+ashby | airapps | Air Apps | 498 jobs, heavily duplicated across locations |
 
 smartrecruiters | Brainlab | Brainlab (incl. Snke OS) |
 personio | snke | Snke OS |
@@ -237,11 +237,11 @@ personio | investa | Investa Holding |
 personio | smartmicro | smartmicro (Smart Microwave Sensors GmbH) |
 smartrecruiters | Auto1 | AUTO1 Group |
 
-ashby | perplexity | Perplexity |
+ashby | perplexity | Perplexity | 206 jobs; Berlin postings are real now |
 ashby | KAYAK | KAYAK (Booking Holdings) |
-greenhouse | intercom | Intercom (Fin) |
-greenhouse | databricks | Databricks |
-lever_eu | pnlfin | Finom |
+greenhouse | intercom | Intercom (Fin) | 705 jobs; new Berlin R&D hub |
+greenhouse | databricks | Databricks | 5,224 jobs — the biggest board here, filter hard |
+lever_eu | pnlfin | Finom | EU Lever host; `pnlfin` 404s on api.lever.co |
 lever_eu | sportalliance | Sport Alliance |
 ashby | krakentech | Kraken Technologies |
 ashby | neko-health | Neko Health |
@@ -250,6 +250,25 @@ ashby | jupus | JUPUS |
 ashby | happyhotel | happyhotel |
 ashby | zeit-ai | Zeit AI |
 ashby | furo | Furo |
+
+## Moved out of the collector on 1 Nov 2026
+
+These were polled from a list inside `collect_ats.py` and never written here. The code list is gone; this file is the only list.
+
+personio | advasolutions | Advasolutions | slug read off advasolutions.com/karriere on 29 Oct 2026; `advastore` answered 404 on 30 runs |
+ashby | finto | Finto |
+greenhouse | constellrgmbh | constellr | left Personio 29 Oct 2026; Greenhouse `constellrgmbh`, served by boards-api like JetBrains |
+personio | legalhero | Legalhero | Berlin legal-tech, ~60-90 people, AI seat |
+personio_html | briink | Briink | Berlin AI Campus, ESG agents, EUR3.85M seed |
+breezy | remerge | Remerge |
+teamtailor | aignostics | Aignostics |
+ashby | microagi | microagi |
+personio | nicos-ag | nicos AG (Xantaro Group) |
+recruitee | machinelearningreply | Machine Learning Reply |
+personio | empit | EMPIT |
+join | wesort | WeSort.AI |
+ashby | iceye | ICEYE |
+join | getglassflow | GlassFlow |
 
 ## Careers page only, no working public API
 sikia | https://www.sikia.ai/en/karriere | Sikia |

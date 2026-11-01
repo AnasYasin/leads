@@ -13,312 +13,6 @@ KEEP_RAW = bool(os.environ.get("RADAR_KEEP_RAW"))
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"}
 
-BOARDS = [
-    # Added 26 Sep 2026 morning. Same failure as dexter-health and microagi below: all three of
-    # these were documented in instructions/COMPANIES.md and never wired in here, so they went unpolled.
-    # imfusion had been in instructions/COMPANIES.md since 31 Aug and was never once polled by this collector;
-    # its Research Engineer - Machine Learning & Medical Imaging was the top pick of this run and
-    # arrived through talent.com with no date instead of off the board with a createdAt.
-    # Since 29 Sep 2026 every `kind | slug | name` line in instructions/COMPANIES.md is polled too (see
-    # _from_companies_md below), so a board only needs adding here when it wants a comment.
-    ("personio", "imfusion", "ImFusion"),        # Munich medical image computing, 4 positions
-    ("greenhouse", "smartlyio", "Smartly"),      # 79 jobs; AI Platform team posts per city
-    ("join", "ai-coustics", "ai-coustics"),      # Berlin speech enhancement SDK, audio ML
-    # Added 27 Sep 2026 morning from the funded-startup sweep, slug fetched by hand against
-    # this exact host first: 15 jobs over 3 pages. Munich acoustic AI, USD 3M pre-seed, builds
-    # a "Large Acoustic Model" for non-speech audio plus the OmniDome counter-drone system.
-    # Only the ML Engineer seat is scoreable and it sits on page 3, so this board is also the
-    # reason the join pagination bug below was found. Their careers page said "hiring paused"
-    # on 27 Sep while every join posting still answered 200 — check before scoring the board.
-    ("join", "omnisent", "Omnisent"),
-    # Added 25 Sep 2026 morning. Every slug below was fetched by hand against the exact host
-    # this collector uses before being added, and the job counts are from that fetch.
-    # lawzero: Yoshua Bengio's AI-safety non-profit, 15 jobs, 9 of them Berlin or Berlin/Montreal.
-    # It is also the unnamed client behind the European Tech Recruit adverts of 24 Sep, so match
-    # its Senior ML Research Developer / Scientist against those before sending either again.
-    ("greenhouse", "lawzero", "LawZero"),
-    # xheroncom: Berlin, Service-as-Software for short-term rentals, 5 roles. Note the `com`
-    # suffix on the slug; plain `xheron` is not the board. Their AI Harness Engineer is the
-    # role already sent on 15 Sep under its old title, so match on the join id, not the title.
-    ("join", "xheroncom", "xHeron Solutions"),
-    # clera: Munich/Zurich/San Francisco, agent systems and post-training. 273 postings and only
-    # three ML seats, so this board needs hard title filtering.
-    ("ashby", "clera", "Clera"),
-    # manex: Munich, agentic platform over manufacturing data, Lightspeed and BlueYard. 10 jobs.
-    # `manexai` 404s on Ashby and Greenhouse; the slug is the bare `manex`.
-    ("ashby", "manex", "Manex AI"),
-    # bowatt: Munich, agentic requirements engineering for manufacturing, EUR 500k+ ARR before
-    # raising. 10 jobs. The "(German-speaking)" tags sit on the commercial roles only.
-    ("ashby", "bowatt", "BoWatt"),
-    # greenpeak: Munich PE house, Infra Investment Team building a shared AI capability for
-    # portfolio companies. 4 positions on the `.de` Personio host, only one of them senior.
-    ("personio", "greenpeak", "GREENPEAK Partners"),
-    # Berlin startups
-    ("ashby", "n8n", "n8n"), ("ashby", "deepsetai", "deepset"),
-    ("ashby", "mirelo", "Mirelo"), ("ashby", "voize", "Voize"), ("ashby", "peec", "Peec AI"),
-    ("ashby", "langfuse", "Langfuse"), ("ashby", "climatiq", "Climatiq"),
-    ("ashby", "sensmore", "sensmore"), ("ashby", "almetra", "Almetra"),
-    ("ashby", "telli", "telli"), ("ashby", "cortea", "Cortea"),
-    ("personio", "workist-gmbh", "Workist"), ("personio", "apheris", "Apheris"),
-    ("personio", "vara", "Vara"), ("greenhouse", "parloa", "Parloa"),
-    ("personio", "merantix", "Merantix"), ("ashby", "prior-labs", "Prior Labs"),
-    ("personio", "dida", "dida"), ("greenhouse", "doctolib", "Doctolib"),
-    ("ashby", "qontext", "Qontext"), ("ashby", "finmid.com", "finmid"),
-    ("greenhouse", "atolls", "Atolls"), ("greenhouse", "solarisbank", "Solaris"),
-    # Added 25 Aug 2026 evening, read off their own Ashby board after the Cherry Ventures
-    # Getro sweep surfaced the company. Note the `-de` suffix; plain `integral` 404s.
-    ("ashby", "integral-de", "Integral"),
-    # Rest of Germany
-    ("ashby", "hawk", "Hawk"), ("ashby", "sereact", "Sereact"),
-    ("ashby", "mindpeak", "Mindpeak"), ("ashby", "orbem", "Orbem"),
-    ("ashby", "alephalpha", "Aleph Alpha"), ("ashby", "tacto", "Tacto"),
-    # Moved Greenhouse -> Ashby, corrected 29 Aug 2026 morning after `greenhouse/blackforestlabs`
-    # started answering 404. The Ashby slug is hyphenated; plain `blackforestlabs` 404s there too.
-    ("ashby", "black-forest-labs", "Black Forest Labs"),
-    ("personio", "wandelbots", "Wandelbots"), ("personio", "twaice", "TWAICE"),
-    # Added 5 Sep 2026 evening. Found by tracing a talent.com card back to the company board.
-    # The feed carries metadata only, no description body, and most rows are Pflichtpraktika --
-    # filter on `recruitingCategory` == "Fulltime Role" before scoring.
-    ("personio", "synapticon", "Synapticon"),
-    ("greenhouse", "konux", "KONUX"), ("ashby", "spaitial", "SpAItial"),
-    ("ashby", "arago", "Arago"), ("personio", "ottonova", "ottonova"),
-    ("personio", "stark", "STARK"), ("personio", "spread-gmbh", "SPREAD"),
-    ("greenhouse", "arxroboticsgmbh", "ARX Robotics"),
-    ("ashby", "cosuno", "Cosuno"), ("ashby", "moss", "Moss"),
-    ("ashby", "mazehq", "Maze"), ("recruitee", "qualifyzegmbh", "Qualifyze"),
-    ("ashby", "preply", "Preply"), ("lever", "finn", "FINN"),
-    # 29 Oct 2026: the slug is `advasolutions`, read off advasolutions.com/karriere (8 positions).
-    # `advastore` had answered 404 on every one of the 30 recorded runs.
-    ("personio", "advasolutions", "Advasolutions"), ("personio", "super-ai", "super.AI"),
-    ("personio", "deeploi", "deeploi"), ("greenhouse", "inceptive", "Inceptive"),
-    ("smartrecruiters", "ScalableGmbH", "Scalable Capital"),
-    ("recruitee", "synera", "Synera"), ("personio", "holidu", "Holidu"),
-    ("ashby", "se3", "SE3 Labs"), ("recruitee", "netconomy", "NETCONOMY"),
-    ("ashby", "finto", "Finto"),
-    # Confirmed by hand 15 Aug 2026 morning, each read off a live apply link, not guessed.
-    ("personio", "credium", "credium"),          # geospatial CV, Augsburg, 5 jobs
-    ("ashby", "avelios-medical", "Avelios Medical"),  # note the `-medical`; plain `avelios` 404s
-    ("personio_html", "alpas-gmbh", "Alpas"),    # slug is `alpas-gmbh`; /xml 404s, HTML board works
-    # geospatial
-    ("personio", "ororatech", "OroraTech"),
-    # 29 Oct 2026: constellr left Personio (404 on all 30 recorded runs). constellr.com links
-    # job-boards.eu.greenhouse.io/constellrgmbh, 27 jobs, served by boards-api like JetBrains.
-    ("greenhouse", "constellrgmbh", "constellr"),
-    ("pinpoint", "careers.osapiens.com", "osapiens"),
-    ("greenhouse", "isaraerospace", "Isar Aerospace"),
-    # larger
-    ("ashby", "deepl", "DeepL"), ("greenhouse", "celonis", "Celonis"),
-    ("greenhouse", "helsing", "Helsing"),
-    ("greenhouse", "ubiquiti", "Ubiquiti"), ("greenhouse", "scaleai", "Scale AI"),
-    # DHL Data & AI, Bonn. Added 25 Aug 2026 at the candidate's request — he has an inside contact
-    # there, so anything this board returns is worth flagging even at a middling fit.
-    ("avature", "dhlconsulting", "DHL Data & AI"),
-    # Added 27 Aug 2026 evening. Both were found by a site-scoped Greenhouse search, not by any
-    # board sweep, and both had roles that passed the fit bar the same run — which is the argument
-    # for polling them. Filter hard on SumUp: 394 jobs, only three are ML and one of those wants
-    # 8+ years. SoundCloud's board is small (14) but carries evergreen postings, so read
-    # `first_published`, not `updated_at`.
-    ("greenhouse", "sumup", "SumUp"), ("greenhouse", "soundcloud71", "SoundCloud"),
-    # Added 30 Aug 2026 morning. All four of that run's shortlisted roles came from these three
-    # boards and none was being polled before — they were found by a site-scoped Ashby/Greenhouse
-    # web search, which is exactly the gap polling is meant to close. Each slug was confirmed
-    # returning jobs before being written down.
-    ("ashby", "almedia", "Almedia"),      # Berlin adtech, bootstrapped, 53 jobs, growing its ML org
-    ("ashby", "cohere", "Cohere"),        # enterprise foundation models, Berlin office, 146 jobs
-    # Air Apps posts the same role across ~10 cities; the body usually says onsite Lisbon regardless
-    # of the city in the title, so read the location out of the description, not the tag.
-    ("ashby", "airapps", "Air Apps"),     # 498 jobs, heavily duplicated across locations
-    # documented exceptions
-    ("teamtailor_feed", "ml6", "ML6"), ("teamtailor_feed", "hedvig", "Hedvig"),
-    # Added 3 Sep 2026 evening. Both were reached through aggregators whose posting dates were
-    # wrong, and polling the board directly is what fixed them — see instructions/COMPANIES.md.
-    # Shine's feed is the JSON-feed shape (`items` + `date_published`), so `teamtailor_feed`.
-    ("teamtailor_feed", "shine", "Shine"),
-    # Added 6 Sep 2026 evening, all three read off a live board, not guessed.
-    # NET CHECK: only `nc-group` works. `net-check`, `netcheckgmbh` and `ncgroup` return nothing,
-    # and `netcheck.jobs.personio.de` is a DIFFERENT company (Madrid marketing) that answers 200
-    # with a valid feed, which is exactly how a wrong slug fails silently.
-    ("personio", "nc-group", "NET CHECK / NC GROUP"),
-    # Buddywise: industrial-safety computer vision, Berlin/Stockholm, remote across DE and SE.
-    # JSON-feed shape, so `teamtailor_feed`. Their own host jobs.buddywise.co serves the same feed.
-    ("teamtailor_feed", "buddywise", "Buddywise"),
-    # Makersite: makersite.io/careers/ 301s straight to the Recruitee board, which is how the slug
-    # was found. Only 2 offers, but full description/requirements/published_at.
-    ("recruitee", "makersitegmbh", "Makersite"),
-    ("personio", "codecentric", "codecentric"),
-    ("recruitee_custom", "career.quantum-systems.com", "Quantum-Systems"),
-    ("personio_html", "enocean", "EnOcean"),
-    # Added 2 Sep 2026 evening; both shortlisted that run, both slugs confirmed live before
-    # being written down. Note the split: Legalhero serves /xml (6 positions), Briink does not
-    # — briink.jobs.personio.de AND .com/xml both 404, only the HTML board answers, so it has
-    # to be personio_html. Briink reached this run through the Merantix AI Campus Getro board,
-    # which means it arrived a day late and via a middleman; polling it directly fixes that.
-    ("personio", "legalhero", "Legalhero"),      # Berlin legal-tech, ~60-90 people, AI seat
-    ("personio_html", "briink", "Briink"),       # Berlin AI Campus, ESG agents, EUR3.85M seed
-    ("breezy", "remerge", "Remerge"),
-    # Confirmed by hand 24 Aug 2026 morning, both read off a live join.com board.
-    ("join", "datacept", "Datacept"),        # RF/SIGINT ML, Hamburg, pre-seed, 1-10 people
-    ("join", "kausableai", "kausable"),      # causal world models, Heidelberg, EUR12M seed
-    # Added 24 Aug 2026 evening, both confirmed off a live join board rather than guessed.
-    ("join", "lucidlabs", "Lucid Labs"),     # Berlin agent studio for the Mittelstand, 5 jobs
-    # dexter health was documented in instructions/COMPANIES.md on 18 Aug and never added here, so it went
-    # unpolled for six days and its roles kept arriving late through talent.com instead.
-    ("join", "dexter-health", "dexter health"),
-    # Added 26 Aug 2026 morning. Both were found as a talent.com row and then read at source on
-    # the company's own board, which is the Tier 2 path in section 3 of instructions/PROMPT.md. Both slugs
-    # were confirmed to return real jobs before being written here.
-    ("personio", "peter-park", "Peter Park"),   # note the hyphen; `peterpark` is not the board
-    ("join", "zalionai", "Zalion"),             # note the `ai` suffix; `zalion` 404s everywhere
-    ("teamtailor", "aignostics", "Aignostics"),
-    # 29 Oct 2026: microagi moved onto Ashby (11 jobs, 6 of them Munich). The old careers page
-    # parser (`jsbundle`) had read 0 jobs for 30 runs. Its board link is on every role on microagi.ai.
-    ("ashby", "microagi", "microagi"),
-    # added 8 Aug 2026 morning
-    ("ashby", "hipeople-official", "HiPeople"),
-    ("ashby", "poolside", "poolside"),
-    ("workable", "enjins", "Enjins"),
-    ("hirehive", "luma-vision", "LUMA Vision"),
-    # added 9 Aug 2026 morning
-    ("greenhouse", "bluefishai", "Bluefish"),
-    # Added 9 Aug 2026 evening. JetBrains has been supplying a steady stream of ML/research
-    # roles, but every one of them reached us through the Bundesagentur, one at a time and
-    # weeks late, because their board was never polled. The board lives on the EU host
-    # (job-boards.eu.greenhouse.io) and boards-api.greenhouse.io serves it fine: 93 jobs.
-    ("greenhouse", "jetbrains", "JetBrains"),
-    # Added 11 Aug 2026 morning. Medical-imaging AI for prostate cancer, Berlin office. Reached
-    # from an Indeed search result, not a board sweep: nucs.ai/careers 404s and the only clue to
-    # the ATS is the string "recruitee" in the homepage markup. Standard host works, 12 offers.
-    ("recruitee", "nucsai", "Nucs AI"),
-    # Added 12 Aug 2026 morning. Berlin earth-observation company, ~130 people, founded 2018,
-    # >EUR 72M raised. Their Senior ML Engineer role is the closest thing to his SPHF geospatial
-    # CV work the radar has surfaced: PyTorch Lightning, GDAL, Rasterio, GeoPandas, STAC. Found
-    # through a general geospatial web search, not a board sweep — the Personio slug carries the
-    # `-gmbh` suffix and plain `liveeo` 429s/404s, so take it from here rather than guessing.
-    # Warning: their Governmental Solutions roles require eligibility for a German security
-    # clearance (Sicherheitsüberprüfung), which is a hard filter for non-EU nationals — read that
-    # line on every role from this board before scoring it.
-    ("personio", "liveeo-gmbh", "LiveEO"),
-    # Added 14 Aug 2026 morning. Munich reality-capture company (VLX scanners + IVION platform),
-    # $85M raised this month, reached from the funding sweep rather than a board poll. Their IVION
-    # Data Foundation team does semantic segmentation and scene understanding on point clouds and
-    # 360-degree imagery at petabyte scale — the closest geospatial CV work in the file after
-    # LiveEO. Board is on the EU Greenhouse host but boards-api serves it fine, same as JetBrains.
-    # Scoring note: their "Lead ML Engineer - Geometric Spatial AI" is lead-level, do not send it.
-    ("greenhouse", "navvis", "NavVis"),
-    # Added 16 Aug 2026 morning, both read off a live apply link rather than guessed.
-    # All Your BI: Rotterdam remote-first data agency, 60+ people across Europe, hiring their
-    # first AI/GenAI lead. Reached through talent.com; the Recruitee slug is the bare company
-    # name and serves 3 offers with real `created_at` dates, which is exactly what talent.com's
-    # own age field does not (see the shortlist note for 16 Aug).
-    ("recruitee", "allyourbi", "All Your BI"),
-    # botario: NFON's Bremen conversational-AI subsidiary (spin-off of JUST ADD AI, acquired by
-    # NFON 1 Aug 2024). This is where NFON's ML roles actually originate — the 15 Aug run reached
-    # their ML Engineer through join.com one job at a time. `/xml` answers 200 with **zero bytes**
-    # on both .de and .com, so the normal `personio` type looks alive and returns nothing; the
-    # HTML board serves all 5 jobs. Use personio_html, not personio.
-    ("personio_html", "botario", "botario (NFON)"),
-    # Added 17 Aug 2026 evening, both read off a live API response rather than guessed.
-    # nicos: secure managed WANs for German Mittelstand, Münster, part of the Xantaro Group. The
-    # slug carries the `-ag` suffix — plain `nicos` 404s on Personio. Reached through the
-    # Bundesagentur, and the board is the better copy: BA reported the AI Agent Engineer role as
-    # first published 17 Aug while the board's `createdAt` says 10 Aug, so take dates from here.
-    # Mostly sales and network roles; their AgentAI platform is the thing worth watching.
-    ("personio", "nicos-ag", "nicos AG (Xantaro Group)"),
-    # Machine Learning Reply: Reply's ML consultancy, Munich/Berlin/Vienna, 13 offers with real
-    # dates. Content matches well on paper (agentic AI, LangChain/LangGraph, RAG, MLOps) but
-    # **every role mandates C1 German and says so explicitly**, so it will pass fit almost never.
-    # Polled anyway so the aggregator tier stops surfacing these one job at a time.
-    ("recruitee", "machinelearningreply", "Machine Learning Reply"),
-    # Added 18 Aug 2026 evening, both read off a live API response rather than guessed.
-    # Q.ANT: photonic computing spin-off of TRUMPF, Stuttgart/Munich/Austin. Slug needs the `-gmbh`
-    # suffix; plain `qant`/`q-ant` are not the board and qant.com's careers page is a JS shell. 18
-    # postings with real createdAt dates, but ~90% are photonics/semiconductor hardware — expect one
-    # or two hardware-flavoured ML roles at a time (their Senior LLM Algorithm Developer wants
-    # silicon-photonics co-design and Mamba/state-space models at 5-7 years, scored 5).
-    ("personio", "q-ant-gmbh", "Q.ANT"),
-    # Bees & Bears: Berlin climate-fintech (solar, storage, heat-pump financing), reached through the
-    # talent.com tier. Their AI roles are observability and first-pipeline data plumbing rather than
-    # modelling, but it is a cheap Berlin startup board to keep in rotation.
-    ("personio_html", "bees-bears-gmbh", "Bees & Bears"),
-    # Added 19 Aug 2026 morning, both read off a live API response rather than guessed.
-    # Agile Robots: DLR spin-out building industrial robot arms (force-torque sensing + vision),
-    # Munich HQ, 2,300+ people, production in Kaufbeuren. Slug needs the `-se` suffix; plain
-    # `agilerobots`/`agile-robots` are not the board. 77 postings with real createdAt dates, ~8 of
-    # them AI/robot-learning. Reached through talent.com on 16 Aug one job at a time — polling the
-    # board directly is what surfaced the (Senior) ML Research Engineer Robotics role. Two things
-    # worth knowing: the board is English with **no German requirement on the ML roles**, which is
-    # rare in this list, and their (Senior) ML Research Engineer Robotics says outright "You don't
-    # need a robotics background", so do not auto-reject their robotics titles on a missing
-    # robotics background. Not a startup, so no small-employer bonus.
-    # MOVED, 25 Sep 2026 evening: the Personio board `agile-robots-se` now returns zero rows.
-    # Read off the apply button on agile-robots.com/en/career/: they are on Greenhouse EU under
-    # `agilerobotsse`, 58 postings, served fine by boards-api.greenhouse.io (same as JetBrains above).
-    # The Greenhouse feed carries updated_at and the full description, so unlike the old Personio XML
-    # it needs no per-job fetch and the date can be trusted.
-    ("greenhouse", "agilerobotsse", "Agile Robots SE"),
-    # Dunia Innovations: Berlin deep-tech, AI + a self-driving robotic lab for electrocatalyst
-    # discovery (green hydrogen, CO2 conversion). $11.5M/EUR 10.6M seed led by Elaia and redalpine.
-    # 13 postings. The /xml carries `yearsOfExperience` but **no jobDescriptions**, so titles and
-    # year bands come from the feed and the description needs a fetch of
-    # `dunia.jobs.personio.com/job/<id>?language=en`. Their ML Researcher, Representation Learning
-    # is his exact thesis topic but is banded 7-10 years and wants a PhD; the mid-level opening to
-    # wait for is the next ML Engineer role.
-    ("personio", "dunia", "Dunia Innovations"),
-    # Added 28 Aug 2026 evening, all three read off a live API response rather than guessed.
-    # EMPIT: Berlin deep-tech (founded 2015, 43 people), non-invasive magnetometry inspection of
-    # buried pipelines. Reached through talent.com and read at source. 21 positions, mostly
-    # hardware and inspection-technician roles. Their one ML role is an evergreen posting dated
-    # March 2025 — take dates from this feed, never from the talent.com card, which reported the
-    # same posting as three days old.
-    ("personio", "empit", "EMPIT"),
-    # WeSort.AI: Würzburg, AI waste analysis and automated material sorting, ~$11.5M raised.
-    # Their ML Engineer - Foundation Models role is the best content match the radar has found in
-    # weeks (SSL pretraining of ViTs, FSDP/DDP, linear/k-NN probing eval suite, ONNX/TensorRT edge
-    # distillation) but requires fluent German, so expect to score high and send nothing until a
-    # role without that line appears.
-    ("join", "wesort", "WeSort.AI"),
-    # Added 5 Sep 2026 evening. Berlin medtech (VICORDER cardiovascular diagnostics) extending
-    # into data/AI. Surfaced by the new arbeitnow sweep, then confirmed on their own join board.
-    ("join", "80beatsmedicalcom", "80 Beats Medical"),
-    # ICEYE: SAR satellite constellation, HQ Espoo, 1000+ people. Big healthy board. Read the
-    # clearance line on every German role — their Forward Deployed AI Engineer (Munich) needs a
-    # German Sicherheitsüberprüfung Ü1/Ü2/Ü3, NATO clearance AND native-level German. The Espoo
-    # ML/AI roles carry no such condition and are the ones worth reading.
-    ("ashby", "iceye", "ICEYE"),
-    # Added 30 Aug 2026 evening. All four confirmed returning jobs before being written down.
-    # MOTOR Ai: Berlin, Level 4 autonomous driving on an explainable-AI stack, $20M seed Jul 2025.
-    # The radar has been seeing this company through the Bundesagentur only, which is why its
-    # AI/ML Engineer arrived twice — once on 24 Aug and again tonight off this board. Polling the
-    # board directly puts it through the repeat check like everything else. 5 jobs.
-    ("join", "motor-ai", "MOTOR Ai"),
-    # RobCo: Munich, modular autonomous industrial robotics, hardware plus software plus AI.
-    # 41 jobs across Munich and Austin; their Senior Applied AI Engineer is Europe-remote.
-    ("ashby", "robco", "RobCo"),
-    # Mercanis: Berlin, AI procurement and supplier management, $19.9M Series A. 48 positions,
-    # but note their only Agentic AI Engineer seat is listed under a Spain office and the XML
-    # carries no descriptions at all, so every role needs a follow-up fetch to be scored.
-    ("personio", "mercanis", "Mercanis"),
-    # AUTO1 Group: Berlin, Europe's largest used-car platform, and it runs a standing computer
-    # vision team on the production imaging pipeline. Big board — 532 postings, mostly operations
-    # and sales across Europe, so filter hard. Their Senior Computer Vision Engineer was confirmed
-    # closed at source on 30 Aug 2026; this entry exists to catch the repost.
-    ("smartrecruiters", "Auto1", "AUTO1 Group"),
-    # Added 3 Sep 2026 morning. GlassFlow: Berlin data infrastructure for AI agents (Tares feeds
-    # agents correlated data, Rius traces and debugs them), $5.9M total, $4.8M seed led by Upfront
-    # Ventures Oct 2024. Reached the radar as a talent.com card and read at source, which is the
-    # Tier 2 path; their own site has no /careers (404) and the board lives on join.com under the
-    # slug `getglassflow` — note the `get` prefix, plain `glassflow` is not the board. Confirmed
-    # returning 5 visible jobs (7 claimed) before being written here. Their AI Engineer was the
-    # top of this run at fit 8.
-    ("join", "getglassflow", "GlassFlow"),
-    # Added 5 Sep 2026 morning. All four were found through the arbeitnow JSON API and then read
-    # at source on the employer's own board, which is the Tier 2 path in section 3 of instructions/PROMPT.md.
-    # Every slug was confirmed returning jobs before being written here.
-    ("ashby", "perplexity", "Perplexity"),        # 206 jobs; Berlin postings are real now
-    ("greenhouse", "intercom", "Intercom (Fin)"), # 705 jobs; new Berlin R&D hub
-    ("greenhouse", "databricks", "Databricks"),   # 5,224 jobs — the biggest board here, filter hard
-    ("lever_eu", "pnlfin", "Finom"),              # EU Lever host; `pnlfin` 404s on api.lever.co
-]
 
 URLS = {
     "greenhouse": "https://boards-api.greenhouse.io/v1/boards/{s}/jobs?content=true",
@@ -366,12 +60,8 @@ URLS = {
     "hirehive": "https://{s}.hirehive.com/api/v1/jobs",
 }
 
-# 29 Sep 2026: instructions/COMPANIES.md is read as well. Runs kept "adding a board" by writing it into
-# instructions/COMPANIES.md and never into BOARDS above, so 51 of the 171 documented boards were never
-# polled, among them Mistral AI, Hugging Face, Atira, The Exploration Company (whose one ML
-# role scored fit 8 on 16 Sep off a LinkedIn card) and LIME medical. Fetched from the laptop
-# that day with this parser: 37 of the 51 answered with 1,447 jobs. Every `kind | slug | name`
-# line whose kind has a URL is polled now, and BOARDS stays for entries that need a comment.
+# instructions/COMPANIES.md is the one list of boards (1 Nov 2026; until then a second list lived here and
+# the two had to be reconciled). Every line whose kind has a URL is polled.
 def _from_companies_md(path=None):
     """Review, 29 Sep 2026: slugs may carry %20 ("Tools%20for%20Humanity"); the same board listed
     under two kinds of one ATS (teamtailor and teamtailor_feed, personio and personio_html,
@@ -380,9 +70,7 @@ def _from_companies_md(path=None):
     path = path or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "instructions/COMPANIES.md")
     fam = lambda k: k.split("_")[0]
     nm = lambda n: fold(re.sub(r"\([^)]*\)", " ", n or ""))
-    have = {(k, s.lower()) for k, s, *_ in BOARDS}
-    have_names = {(fam(k), nm(n)) for k, s, n, *_ in BOARDS}
-    have_urls = {URLS[k].format(s=s) for k, s, *_ in BOARDS if k in URLS}
+    have, have_names, have_urls = set(), set(), set()
     out, dead = [], set()
     try:
         lines = open(path, encoding="utf-8").read().splitlines()
@@ -391,8 +79,7 @@ def _from_companies_md(path=None):
         return out, dead
     for line in lines:
         m = re.match(r"\s*([a-z_]+)\s*\|\s*([A-Za-z0-9._%\-]+)\s*\|\s*(.+?)\s*\|", line)
-        # 29 Oct 2026: a line whose kind is `dead` retires that slug everywhere, BOARDS included.
-        # Meshcapade's line had said "DEAD, stop polling" since 3 Aug while BOARDS kept polling it.
+        # 29 Oct 2026: a line whose kind is `dead` retires that slug everywhere.
         if m and m.group(1) == "dead":
             dead.add(m.group(2).lower())
             continue
@@ -407,8 +94,7 @@ def _from_companies_md(path=None):
     return [b for b in out if b[1].lower() not in dead], dead
 
 
-_MD, DEAD = _from_companies_md()
-BOARDS = [b for b in BOARDS if b[1].lower() not in DEAD] + _MD
+BOARDS, DEAD = _from_companies_md()
 
 
 
