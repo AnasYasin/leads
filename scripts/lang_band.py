@@ -83,52 +83,11 @@ if __name__ == "__main__":
     print(band(sys.stdin.read()))
 
 
-# Added 29 Sep 2026 for filter_run.py, which drops a candidate before anyone reads it when
-# this returns a sentence. `band()` is a first pass the agent can overrule, and on the 312
-# sent packs it said "drop" 16 times, about half of them wrong: "fließend Englisch und
-# verstehen Deutsch", "gute Deutschkenntnisse sind ein Plus", "C1 von Vorteil, B2 ausreichend",
-# and long unsplit chunks where the German word sat far from the requirement. This test is
-# narrower. A strong German requirement, stated in one short sentence, with nothing in that
-# sentence that softens it.
-HARD = re.compile(
-    r"sehr gute[ns]?\s+deutsch|ausgezeichnete[ns]?\s+deutsch|exzellente[ns]?\s+deutsch|perfekte[ns]?\s+deutsch"
-    r"|verhandlungssicher\w*\s+(auf\s+)?deutsch|deutsch\w*\s+(\w+\s+){0,3}verhandlungssicher"
-    r"|flie(ß|ss)end\w*\s+(auf\s+)?deutsch|deutsch\w*\s+(\w+\s+){0,2}flie(ß|ss)end"
-    r"|deutsch\w*[^.;]{0,20}\b(c1|c2)\b|\b(c1|c2)\b[-\s]*deutsch|deutsch als muttersprache|muttersprachlich\w*\s+deutsch"
-    r"|fluent\s+(in\s+)?(both\s+)?(english\s+and\s+)?german|(business|native)[-\s]+(level\s+|fluent\s+)?german"
-    r"|german\s+(\(|at\s+)?(c1|c2)\b|fluency\s+in\s+german"
-    r"|flie(ß|ss)end\w*\s+in\s+deutsch|deutsch\W{1,3}verhandlungssicher|deutsch\W{1,3}flie(ß|ss)end"
-    # A skills word is required after "very good/excellent/strong ... German" (review, 29 Sep 2026):
-    # "Strong track record in German automotive" and "excellent knowledge of the German market" are
-    # not language requirements.
-    r"|(very good|excellent|strong)\s+(command of\s+|knowledge of\s+)?german(\s+and\s+english)?\s+(skills|language|knowledge|communication|proficiency)"
-    r"|german\W{1,3}(fluent|native)"
-    r"|(c1|c2)[-\s]+level\s+german|deutsch\w*[^.;]{0,30}sehr gut in wort und schrift", re.I)
-SOFT = re.compile(
-    r"vorteil|plus|wünschenswert|wuenschenswert|ausreichend|nice to have|advantage|bonus|beneficial|"
-    r"optional|kein muss|not required|verstehen|\bb1\b|\bb2\b|helpful|hilfreich|welcome|willing to learn|"
-    r"or english|oder englisch|not a must|not mandatory|nicht zwingend", re.I)
-
-
 def hard_drop(text):
     """The sentence that disqualifies the posting on German alone, or None. Since 2 Oct 2026 this is
     the "drop" verdict of `german` below: certain cases only. Unclear lines are `to_decide`."""
     verdict, lines = german(text)
     return lines[0] if verdict == "drop" else None
-
-
-def _hard_drop_regex(text):
-    """The rule before 2 Oct 2026, kept for comparison runs. Not used by the radar."""
-    for s in _sentences(text):
-        if len(s) > 220 or not HARD.search(s) or SOFT.search(s):
-            continue
-        # "fließend Englisch und ... Deutsch": English sits between, so fluency is about English.
-        m = HARD.search(s)
-        if re.search(r"(englisch|english)", s[max(0, m.start() - 30):m.start()], re.I) and \
-           re.search(r"flie(ß|ss)end|fluent", m.group(0), re.I) and not re.search(r"deutsch|german", s[:m.start()], re.I):
-            continue
-        return s[:240]
-    return None
 
 
 # ---------------------------------------------------------------------------------------------

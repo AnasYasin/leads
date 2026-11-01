@@ -34,7 +34,6 @@ sys.path.insert(0, HERE)
 from jobid import norm_url, same_company, same_role, sent_match  # noqa: E402
 from lang_band import german  # noqa: E402
 import clearance  # noqa: E402
-import rejected as rejmem  # noqa: E402
 from applications import applied  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
@@ -74,15 +73,6 @@ def quoted(lang_line, lines):
         if n and (n in have or any(n[i:i + 30] in have for i in range(0, max(1, len(n) - 29), 3))):
             return True
     return False
-
-
-def clearance_line(text):
-    """The sentence that requires a nationality or a security clearance, or None. Uses the same rule
-    rejected.py applies to rejection reasons, sentence by sentence, with its negation guard."""
-    for s in re.split(r"(?<=[.!?\n])\s+", text or ""):
-        if len(s) <= 300 and rejmem.CLEARANCE_KILL.search(s) and not rejmem.NOT_KILL.search(s):
-            return s.strip()[:200]
-    return None
 
 
 def check(shortlist_path, root=ROOT):
