@@ -17,13 +17,20 @@ So this collector fetches the detail for every card it keeps. Cards are few (abo
 
 Usage: collect_xing.py <out.json>
 """
-import html, json, re, sys, time, urllib.parse, urllib.request
+import html
+import json
+import re
+import sys
+import time
+import urllib.parse
+import urllib.request
 import concurrent.futures as cf
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36",
       "Accept-Language": "de-DE,de;q=0.9,en;q=0.8"}
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 import cfg  # noqa: E402
 # Search terms live in config/radar.yaml (search.xing) since 29 Sep 2026.
@@ -42,7 +49,8 @@ def fetch(url):
         return r.read().decode("utf-8", "replace")
 
 
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from textclean import html_to_text, join_html  # noqa: E402
 KEEP_RAW = bool(_os.environ.get("RADAR_KEEP_RAW"))   # keep the source HTML as desc_raw, for comparisons

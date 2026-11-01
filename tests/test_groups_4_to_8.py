@@ -1,5 +1,4 @@
 """docs/PROBLEMS.md groups 4 to 8, the parts fixed on 2 Oct 2026. Each test names the problem it pins down."""
-import datetime
 import json
 import os
 

@@ -25,7 +25,12 @@ again `last` moves forward.
     python3 scripts/rejected.py --seed [days]   rebuild from the Rejected sections of shortlists/
     python3 scripts/rejected.py --stats         counts
 """
-import datetime, glob, json, os, re, sys
+import datetime
+import glob
+import json
+import os
+import re
+import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from jobid import is_repeat, canonical_id
 

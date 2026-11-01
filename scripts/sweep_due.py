@@ -22,7 +22,13 @@ per round ("Nomos erhält 20 Millionen") plus a daily #StartupTicker and a weekl
 Checked from the laptop on 29 Sep 2026: /feed/ answers 200 with posts dated that week, and
 ?paged=2..4 reach back to 7 Sep. eu-startups.com and sifted.eu answered 403 from the laptop.
 """
-import datetime, email.utils, json, os, re, sys, urllib.request
+import datetime
+import email.utils
+import json
+import os
+import re
+import sys
+import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH = os.path.join(ROOT, "state/sweep.json")

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Filter the collected pools down to ML-relevant, non-repeat candidates."""
-import json, re, sys, os
+import json
+import re
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from jobid import is_repeat, canonical_id
 import cfg

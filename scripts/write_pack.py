@@ -18,7 +18,13 @@ so a vanished job is caught at the last moment.
 Usage: write_pack.py <scratchdir>/shortlist.json
 Schema: see SHORTLIST_SCHEMA below. Missing optional fields render as empty.
 """
-import datetime, json, os, re, subprocess, sys, urllib.parse
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)

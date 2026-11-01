@@ -25,7 +25,10 @@ a deleted job is still never sent twice. The file is gone from the tree but stay
     python3 scripts/prune_packs.py <scratch>          check, strike, delete
     python3 scripts/prune_packs.py <scratch> --dry    check and report, change nothing
 """
-import datetime, json, os, sys
+import datetime
+import json
+import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Bundesagentur fuer Arbeit sweep. v6 search, v4 detail."""
-import json, sys, time, urllib.parse, urllib.request
+import json
+import sys
+import time
+import urllib.parse
+import urllib.request
 
 HDR = {"X-API-Key": "jobboerse-jobsuche", "User-Agent": "Mozilla/5.0"}
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 import cfg  # noqa: E402
 # Search terms and places live in config/radar.yaml (search.bundesagentur) since 29 Sep 2026.

@@ -48,7 +48,10 @@ THIN = 300
 
 
 def readers():
-    import read_jobs, read_linkedin, read_talent, jobpage
+    import read_jobs
+    import read_linkedin
+    import read_talent
+    import jobpage
     return {"Bundesagentur": read_jobs.one, "linkedin": read_linkedin.one, "talent.com": read_talent.one,
             ANY: jobpage.one}
 

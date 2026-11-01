@@ -20,7 +20,8 @@ Usage: read_talent.py <scratchdir> [<substring> ...]
 """
 import concurrent.futures as cf
 import json
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from trim_desc import trim
 from textclean import html_to_text

@@ -32,7 +32,8 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36",
       "Accept-Language": "de-DE,de;q=0.9,en;q=0.8"}
 
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 import cfg  # noqa: E402
 # Search terms live in config/radar.yaml (search.talent) since 29 Sep 2026.

@@ -4,7 +4,6 @@ import os
 import subprocess
 import sys
 
-import pytest
 
 import final_check as F
 from conftest import SCRIPTS

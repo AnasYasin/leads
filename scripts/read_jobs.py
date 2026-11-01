@@ -6,7 +6,13 @@ Matches candidates whose "company | title" contains any substring (case-insensit
 Bundesagentur rows get a v4 detail call; ATS rows print the description already
 collected; anything else gets a plain fetch of its url.
 """
-import base64, json, re, sys, os, urllib.request, urllib.error
+import base64
+import json
+import re
+import sys
+import os
+import urllib.request
+import urllib.error
 import concurrent.futures as cf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lang_band import band as lang_band
@@ -16,7 +22,7 @@ import jobpage
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"}
-BA_HDR = dict(UA); BA_HDR["X-API-Key"] = "jobboerse-jobsuche"
+BA_HDR = dict(UA, **{"X-API-Key": "jobboerse-jobsuche"})
 
 # 29 Sep 2026: importable, so scripts/fetch_desc.py can reuse one() without the command line.
 needles = []

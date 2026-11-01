@@ -19,7 +19,12 @@ Sources and the files they write:
 Each collector's stderr is saved as <name>.log in the scratch directory, and a one-line
 summary per source is printed at the end so the coverage table can be filled in from it.
 """
-import os, subprocess, sys, time, datetime, json
+import os
+import subprocess
+import sys
+import time
+import datetime
+import json
 import concurrent.futures as cf
 
 HERE = os.path.dirname(os.path.abspath(__file__))

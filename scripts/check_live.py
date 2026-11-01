@@ -19,7 +19,11 @@ Checks by url shape:
 Output: LIVE | GONE | UNSURE, then the reason, then the url.
 Usage: check_live.py <url> [<url> ...]      or     check_live.py - (urls on stdin)
 """
-import base64, re, sys, urllib.request, urllib.error
+import base64
+import re
+import sys
+import urllib.request
+import urllib.error
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36",

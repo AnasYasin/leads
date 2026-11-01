@@ -13,7 +13,12 @@ Usage: read_linkedin.py <scratchdir> [<substring> ...]
 Reads candidates.json, takes rows with source "linkedin", optionally filtered by
 "company | title" substring, writes linkedin_read.json and prints one block per job.
 """
-import json, os, re, sys, time, urllib.request
+import json
+import os
+import re
+import sys
+import time
+import urllib.request
 import concurrent.futures as cf
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

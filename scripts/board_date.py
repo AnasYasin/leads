@@ -14,7 +14,11 @@ Lever, Recruitee, Workable, SmartRecruiters, Teamtailor, Workday), matching the 
 the url first and by title second. For any other page it looks for a JSON-LD JobPosting
 `datePosted`. Returns "" when nothing is found; never guesses.
 """
-import json, os, re, sys, urllib.request
+import json
+import os
+import re
+import sys
+import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import deepdive

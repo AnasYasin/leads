@@ -17,7 +17,11 @@ Two traps, both recorded on 5 Sep 2026 morning and both handled here:
 - **The feed interleaves German, UK and Irish jobs.** The `location` field alone does not
   separate them, so rows whose `url` host is not `arbeitnow.com` are dropped here.
 """
-import json, re, sys, urllib.parse, urllib.request
+import json
+import re
+import sys
+import urllib.parse
+import urllib.request
 import concurrent.futures as cf
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -26,7 +30,8 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 PAGES = 14
 
 
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from textclean import html_to_text  # noqa: E402
 KEEP_RAW = bool(_os.environ.get("RADAR_KEEP_RAW"))   # keep the source HTML as desc_raw, for comparisons

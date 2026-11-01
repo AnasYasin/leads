@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Poll every ATS board in instructions/COMPANIES.md, including the documented exceptions."""
-import json, os, re, sys, time, urllib.request, urllib.error, concurrent.futures as cf
+import json
+import os
+import re
+import sys
+import time
+import urllib.request
+import urllib.error
+import concurrent.futures as cf
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from jobid import PLACE, fold
@@ -89,7 +96,9 @@ def _from_companies_md(path=None):
         url = URLS[k].format(s=slug)
         if (k, slug.lower()) in have or (fam(k), nm(name)) in have_names or url in have_urls:
             continue
-        have.add((k, slug.lower())); have_names.add((fam(k), nm(name))); have_urls.add(url)
+        have.add((k, slug.lower()))
+        have_names.add((fam(k), nm(name)))
+        have_urls.add(url)
         out.append((k, slug, name))
     return [b for b in out if b[1].lower() not in dead], dead
 
