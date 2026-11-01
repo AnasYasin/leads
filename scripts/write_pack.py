@@ -275,89 +275,10 @@ def slot_problem(sl, path):
     return None
 
 
-def main():
-    if sys.argv[1] == "--reindex":
-        n = len(reindex(os.path.dirname(HERE)))
-        print("jobs/index.json rebuilt, %d packs" % n)
-        return
-    path = sys.argv[1]
-    sl = json.load(open(path, encoding="utf-8"))
-    bad = slot_problem(sl, path)
-    if bad:
-        sys.exit(bad)
-    # 30 Sep 2026: the run time comes from the clock, not from the agent (slots.elapsed_minutes).
-    mins = elapsed_minutes(os.path.dirname(os.path.abspath(path)))
-    if mins is not None:
-        sl["minutes"] = mins
-    root = os.path.dirname(HERE)
-    # 29 Sep 2026 review: the agent writes this file by hand, so shapes vary. A string priority
-    # crashed the redate step, a float one crashed reindex on every later run, and a string in
-    # also_found crashed rendering after state/seen.json was written. Normalise before anything runs.
-    def _num(v):
-        try:
-            return int(round(float(v)))
-        except (TypeError, ValueError):
-            return 0
-    for key in ("jobs", "also_found", "direct_look", "rejected", "coverage", "borderline"):
-        v = sl.get(key)
-        if v is None:
-            continue
-        if not isinstance(v, list):
-            v = [v]
-        sl[key] = [x if isinstance(x, dict) else {"title": str(x)} for x in v]
-    sl["jobs"] = [j for j in sl.get("jobs", []) if j.get("company") or j.get("title")]
-    for j in sl.get("jobs", []):
-        j["company"], j["title"] = str(j.get("company") or "?"), str(j.get("title") or "?")
-        for k in ("fit", "priority"):
-            if j.get(k) not in (None, ""):
-                j[k] = _num(j[k])
-    date, slot = sl["date"], sl["slot"]
-    jobs = sl.get("jobs", [])
-    # 2 Oct 2026: what was read is taken from the reader's log (scripts/read_next.py), never from the
-    # agent. A job the reader did not print in full is not sent. The rejected, borderline and fit-6
-    # lists and the reading counts come from verdicts.json. A render without a reader log (a laptop
-    # backfill, --packs-only) is not checked.
-    sc_dir = os.path.dirname(os.path.abspath(path))
-    verdicts_used = None
-    import verdict as V
-    if V.no_reader(sc_dir):
-        sys.exit("REFUSED: %s. Nothing was written." % V.NO_READER)
-    if os.path.exists(os.path.join(sc_dir, "read_log.json")):
-        import read_next as RN
-        notread = V.unread_jobs(sc_dir, jobs)
-        if notread:
-            for j, why in notread:
-                print("NOT READ %s | %s: %s" % (j["company"], j["title"][:60], why), file=sys.stderr)
-            sys.exit("REFUSED: %d of the %d jobs to send were not read in full by scripts/read_next.py. Nothing was "
-                     "written. Read them, or take them out of `jobs`, and render again." % (len(notread), len(jobs)))
-        built = V.lists(sc_dir)
-        for key in ("also_found", "borderline", "rejected"):
-            sl[key] = built[key]
-        sl.update(V.counts(sc_dir))
-        sl["reading"] = V.reading_record(sc_dir)        # 3 Oct 2026: kept for scripts/read_audit.py
-        full = {RN.cid(c): c.get("desc") or "" for c in RN.candidates(sc_dir)}
-        for j in jobs:
-            j["desc"] = full.get(j.get("id")) or j.get("desc") or ""      # the text that was read, whole
-        verdicts_used = RN.verdicts(sc_dir)
-    # 2 Oct 2026 (docs/PROBLEMS.md 5.6): the final check is part of the render. On 30 Sep the noon run
-    # rendered 20 jobs, found a repeat afterwards (knuspr is Rohlik), and a second email went out seven
-    # minutes later. Nothing is written or pushed while a job in the list must go.
-    if "--packs-only" not in sys.argv and "--no-final-check" not in sys.argv:
-        import final_check
-        try:
-            tmp = dict(sl, jobs=jobs)
-            fc_path = os.path.join(sc_dir, ".final_check.json")
-            json.dump(tmp, open(fc_path, "w", encoding="utf-8"), ensure_ascii=False)
-            must_go = [r for r in final_check.check(fc_path, root) if r[0] in final_check.BAD]
-            os.remove(fc_path)
-        except Exception as ex:
-            must_go = []
-            print("final check could not run inside the render: %s. Run scripts/final_check.py by hand." % str(ex)[:120], file=sys.stderr)
-        if must_go:
-            for verdict_, co, ti, note in must_go:
-                print("%-10s %s | %s  %s" % (verdict_, co[:40], ti[:60], note[:160]), file=sys.stderr)
-            sys.exit("REFUSED: %d jobs must leave the list before the render (see the lines above and scripts/final_check.py). "
-                     "Nothing was written, so no email goes out. Fix shortlist.json and render again." % len(must_go))
+def enrich(jobs, date):
+    """Check and complete the jobs about to be sent: the live check, the employer's own date, the
+    priority, the headcount, a conditional clearance line, the salary. Returns (jobs, dropped);
+    dropped are the GONE ones. Network goes through `live` and `true_date` only."""
     dropped = []
     for j in jobs:
         st, why = live(j.get("apply_url") or j.get("fallback_url"))
@@ -431,8 +352,12 @@ def main():
 
     for j in dropped:
         print("DROPPED, gone at send: %s | %s | %s" % (j["company"], j["title"], j.get("apply_url")), file=sys.stderr)
-    sl["jobs"] = jobs
+    return jobs, dropped
 
+
+def write_packs(root, jobs, sl, date, slot):
+    """Write jobs/<id>.md for every job, update the company cache, and return the new state/seen.json
+    rows (not yet written: that happens last, in commit)."""
     # packs + seen
     seen = json.load(open(os.path.join(root, "state/seen.json")))
     seen_ids = {e.get("id") for e in seen}
@@ -493,21 +418,13 @@ def main():
         seen.append(entry)
     cutoff = (datetime.date.fromisoformat(date) - datetime.timedelta(days=90)).isoformat()
     seen = [e for e in seen if (e.get("sent") or e.get("date") or "9999") >= cutoff]
-    # --packs-only (29 Sep 2026): add jobs to his pool without a shortlist, so no email goes out.
-    # Used to backfill jobs a run found but never sent. state/seen.json still records them, so no later
-    # run sends them again, and pick.py and batch mode see them like any other pack.
-    if "--packs-only" in sys.argv:
-        json.dump(seen, open(os.path.join(root, "state/seen.json"), "w"), ensure_ascii=False, indent=1)
-        reindex(root)
-        print("%d packs written without a shortlist (no email), state/seen.json now %d entries, %d dropped as gone"
-              % (len(packs), len(seen), len(dropped)), file=sys.stderr)
-        return
-    # state/seen.json is written at the very end, after the shortlist files exist. Written here, a crash
-    # while rendering marked jobs as sent that were never emailed (review, 29 Sep 2026).
+    return seen, packs
 
+
+def email_md(sl, jobs, dropped, sc_dir, verdicts_used, date, slot):
+    """The shortlist markdown, email first, run details below the cut."""
     # email
-    n_new = len(jobs)
-    md = ["# Job radar, %s %s, %d new" % (date, slot, n_new), ""]
+    md = ["# Job radar, %s %s, %d new" % (date, slot, len(jobs)), ""]
     if sl.get("intro"):
         md += [sl["intro"], ""]
     order = sorted(jobs, key=lambda j: -(j.get("priority") or 0))
@@ -532,7 +449,7 @@ def main():
     # section must never stop the email, so any error only leaves a note.
     try:
         import fresh_check
-        left = fresh_check.unread_fresh(os.path.dirname(os.path.abspath(path)), sl)
+        left = fresh_check.unread_fresh(sc_dir, sl)
         if left:
             md += ["## Fresh, not read yet (%d)" % len(left), "",
                    "Posted in the last %d days, in your field, and not read by this run. Open these first."
@@ -549,6 +466,7 @@ def main():
     # "Tier 3", one of them a NATO-nationality role.
     if verdicts_used is not None:
         try:
+            import read_next as RN
             why = {r.get("url"): r.get("why") for r in json.load(open(os.path.join(sc_dir, "no_text.json"), encoding="utf-8"))} \
                 if os.path.exists(os.path.join(sc_dir, "no_text.json")) else {}
             blind = [c for c in RN.candidates(sc_dir) if not RN.has_text(c)]
@@ -566,8 +484,8 @@ def main():
     border = list(sl.get("borderline") or []) + [r for r in sl.get("rejected") or [] if r.get("gate") not in GATES]
     if border:
         links = {}
-        for c in json.load(open(os.path.join(os.path.dirname(os.path.abspath(path)), "candidates.json"), encoding="utf-8")) \
-                if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(path)), "candidates.json")) else []:
+        for c in json.load(open(os.path.join(sc_dir, "candidates.json"), encoding="utf-8")) \
+                if os.path.exists(os.path.join(sc_dir, "candidates.json")) else []:
             links.setdefault(canonical_id(c.get("company") or "", c.get("title") or "", ""), c.get("url") or "")
         md += ["## Borderline, not sent (%d)" % len(border), "",
                "Read in full and close to the bar, with no clear reason to reject. Your call.", ""]
@@ -656,8 +574,15 @@ def main():
             md.append("- %s — %s · fit %s · %s%s" % (r.get("title", ""), r.get("company", ""), r.get("fit", "?"),
                                                     "gate %s · " % r["gate"] if r.get("gate") else "", r.get("reason", "")))
         md.append("")
+    return "\n".join(md)
+
+
+def commit(root, out, md, sl, jobs, dropped, seen, verdicts_used, sc_dir, date, slot):
+    """Every write of the run, in this order: the shortlist md, state/rejected.json, state/decisions.json,
+    state/leftover.json, the run json, state/seen.json last (a crash before it leaves nothing marked as
+    sent), reports/HEALTH.md, jobs/index.json. Returns the pruned seen rows."""
     out = os.path.join(root, "shortlists", "%s-%s.md" % (date, slot))
-    open(out, "w", encoding="utf-8").write("\n".join(md))
+    open(out, "w", encoding="utf-8").write(md)
     # 29 Sep 2026: remember German and clearance kills so filter_run.py skips them next time.
     try:
         import rejected as rejmem
@@ -681,7 +606,7 @@ def main():
     # evening add what they did not read; noon removes what it processed.
     try:
         import leftover
-        msg = leftover.after_render(os.path.dirname(os.path.abspath(path)), sl, root)
+        msg = leftover.after_render(sc_dir, sl, root)
         if msg:
             print(msg, file=sys.stderr)
     except Exception as ex:
@@ -704,6 +629,113 @@ def main():
     except Exception as ex:
         print("reports/HEALTH.md not rebuilt: %s" % str(ex)[:80], file=sys.stderr)
     reindex(root)
+    return seen
+
+
+def _num(v):
+    try:
+        return int(round(float(v)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def main():
+    if sys.argv[1] == "--reindex":
+        n = len(reindex(os.path.dirname(HERE)))
+        print("jobs/index.json rebuilt, %d packs" % n)
+        return
+    path = sys.argv[1]
+    sl = json.load(open(path, encoding="utf-8"))
+    bad = slot_problem(sl, path)
+    if bad:
+        sys.exit(bad)
+    # 30 Sep 2026: the run time comes from the clock, not from the agent (slots.elapsed_minutes).
+    mins = elapsed_minutes(os.path.dirname(os.path.abspath(path)))
+    if mins is not None:
+        sl["minutes"] = mins
+    root = os.path.dirname(HERE)
+    # 29 Sep 2026 review: the agent writes this file by hand, so shapes vary. A string priority
+    # crashed the redate step, a float one crashed reindex on every later run, and a string in
+    # also_found crashed rendering after state/seen.json was written. Normalise before anything runs.
+    for key in ("jobs", "also_found", "direct_look", "rejected", "coverage", "borderline"):
+        v = sl.get(key)
+        if v is None:
+            continue
+        if not isinstance(v, list):
+            v = [v]
+        sl[key] = [x if isinstance(x, dict) else {"title": str(x)} for x in v]
+    sl["jobs"] = [j for j in sl.get("jobs", []) if j.get("company") or j.get("title")]
+    for j in sl.get("jobs", []):
+        j["company"], j["title"] = str(j.get("company") or "?"), str(j.get("title") or "?")
+        for k in ("fit", "priority"):
+            if j.get(k) not in (None, ""):
+                j[k] = _num(j[k])
+    date, slot = sl["date"], sl["slot"]
+    jobs = sl.get("jobs", [])
+    # 2 Oct 2026: what was read is taken from the reader's log (scripts/read_next.py), never from the
+    # agent. A job the reader did not print in full is not sent. The rejected, borderline and fit-6
+    # lists and the reading counts come from verdicts.json. A render without a reader log (a laptop
+    # backfill, --packs-only) is not checked.
+    sc_dir = os.path.dirname(os.path.abspath(path))
+    verdicts_used = None
+    import verdict as V
+    if V.no_reader(sc_dir):
+        sys.exit("REFUSED: %s. Nothing was written." % V.NO_READER)
+    if os.path.exists(os.path.join(sc_dir, "read_log.json")):
+        import read_next as RN
+        notread = V.unread_jobs(sc_dir, jobs)
+        if notread:
+            for j, why in notread:
+                print("NOT READ %s | %s: %s" % (j["company"], j["title"][:60], why), file=sys.stderr)
+            sys.exit("REFUSED: %d of the %d jobs to send were not read in full by scripts/read_next.py. Nothing was "
+                     "written. Read them, or take them out of `jobs`, and render again." % (len(notread), len(jobs)))
+        built = V.lists(sc_dir)
+        for key in ("also_found", "borderline", "rejected"):
+            sl[key] = built[key]
+        sl.update(V.counts(sc_dir))
+        sl["reading"] = V.reading_record(sc_dir)        # 3 Oct 2026: kept for scripts/read_audit.py
+        full = {RN.cid(c): c.get("desc") or "" for c in RN.candidates(sc_dir)}
+        for j in jobs:
+            j["desc"] = full.get(j.get("id")) or j.get("desc") or ""      # the text that was read, whole
+        verdicts_used = RN.verdicts(sc_dir)
+    # 2 Oct 2026 (docs/PROBLEMS.md 5.6): the final check is part of the render. On 30 Sep the noon run
+    # rendered 20 jobs, found a repeat afterwards (knuspr is Rohlik), and a second email went out seven
+    # minutes later. Nothing is written or pushed while a job in the list must go.
+    if "--packs-only" not in sys.argv and "--no-final-check" not in sys.argv:
+        import final_check
+        try:
+            tmp = dict(sl, jobs=jobs)
+            fc_path = os.path.join(sc_dir, ".final_check.json")
+            json.dump(tmp, open(fc_path, "w", encoding="utf-8"), ensure_ascii=False)
+            must_go = [r for r in final_check.check(fc_path, root) if r[0] in final_check.BAD]
+            os.remove(fc_path)
+        except Exception as ex:
+            must_go = []
+            print("final check could not run inside the render: %s. Run scripts/final_check.py by hand." % str(ex)[:120], file=sys.stderr)
+        if must_go:
+            for verdict_, co, ti, note in must_go:
+                print("%-10s %s | %s  %s" % (verdict_, co[:40], ti[:60], note[:160]), file=sys.stderr)
+            sys.exit("REFUSED: %d jobs must leave the list before the render (see the lines above and scripts/final_check.py). "
+                     "Nothing was written, so no email goes out. Fix shortlist.json and render again." % len(must_go))
+    jobs, dropped = enrich(jobs, date)
+    sl["jobs"] = jobs
+    seen, packs = write_packs(root, jobs, sl, date, slot)
+    # --packs-only (29 Sep 2026): add jobs to his pool without a shortlist, so no email goes out.
+    # Used to backfill jobs a run found but never sent. state/seen.json still records them, so no later
+    # run sends them again, and pick.py and batch mode see them like any other pack.
+    if "--packs-only" in sys.argv:
+        json.dump(seen, open(os.path.join(root, "state/seen.json"), "w"), ensure_ascii=False, indent=1)
+        reindex(root)
+        print("%d packs written without a shortlist (no email), state/seen.json now %d entries, %d dropped as gone"
+              % (len(packs), len(seen), len(dropped)), file=sys.stderr)
+        return
+    # state/seen.json is written at the very end, after the shortlist files exist. Written here, a crash
+    # while rendering marked jobs as sent that were never emailed (review, 29 Sep 2026).
+
+    n_new = len(jobs)
+    md = email_md(sl, jobs, dropped, sc_dir, verdicts_used, date, slot)
+    out = os.path.join(root, "shortlists", "%s-%s.md" % (date, slot))
+    seen = commit(root, out, md, sl, jobs, dropped, seen, verdicts_used, sc_dir, date, slot)
     print(out)
     print("%d jobs rendered (%d band A, %d band B), %d packs, state/seen.json now %d entries, %d dropped as gone"
           % (n_new, sum(1 for j in jobs if (j.get("band") or "A") == "A"),
