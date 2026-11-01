@@ -4,6 +4,7 @@ import json, re, sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from jobid import is_repeat, canonical_id
 import cfg
+import applications
 
 # Every title, employer and location pattern below is read from config/radar.yaml (29 Sep 2026).
 
@@ -87,11 +88,7 @@ def applied_from_log(path=None):
     path = path or os.path.join(ROOT, "state/applications.md")
     if not os.path.exists(path):
         return []
-    txt = open(path, encoding="utf-8").read()
-    names = [l.split("|")[2].strip() for l in txt.splitlines() if l.startswith("| 20")]
-    m = re.search(r"## Older applications.*?\n\n.*?\n\n(.*?)(?:\n\n|\Z)", txt, re.S)
-    if m:
-        names += [n.strip() for n in m.group(1).replace("\n", " ").split(",")]
+    names = [r["Company"] for r in applications.rows(path)] + applications.older_names(path)
     skip = {"general", "group", "gmbh", "ag", "se"}
     out = []
     for n in names:
@@ -107,13 +104,7 @@ def applied_roles(path=None):
     path = path or os.path.join(ROOT, "state/applications.md")
     if not os.path.exists(path):
         return []
-    rows = []
-    for l in open(path, encoding="utf-8"):
-        if l.startswith("| 20"):
-            c = l.split("|")
-            if len(c) > 3:
-                rows.append((c[2].strip().lower(), c[3].strip(), c[1].strip()))
-    return rows
+    return [(r["Company"].lower(), r["Role"], r["Researched"]) for r in applications.rows(path)]
 
 
 APPLIED_ROLES = applied_roles()

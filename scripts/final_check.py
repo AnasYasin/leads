@@ -35,6 +35,7 @@ from jobid import is_repeat, norm_url, same_company, same_role, second_opening  
 from lang_band import german  # noqa: E402
 import clearance  # noqa: E402
 import rejected as rejmem  # noqa: E402
+from applications import applied  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 BAD = ("REPEAT", "APPLIED", "GERMAN", "GERMAN?", "CLEARANCE", "UNREAD")
@@ -58,18 +59,6 @@ def pool_urls(scratch):
             if isinstance(r, dict) and r.get("url"):
                 urls.add(norm_url(r["url"]))
     return urls
-
-
-def applied(path):
-    out = []
-    try:
-        for l in open(path, encoding="utf-8"):
-            c = [x.strip() for x in l.split("|")]
-            if len(c) >= 9 and re.match(r"\d{4}-\d{2}-\d{2}", c[1]) and c[7].lower().startswith("yes"):
-                out.append((c[2], c[3]))
-    except OSError:
-        pass
-    return out
 
 
 def _norm(t):

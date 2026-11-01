@@ -28,6 +28,9 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import applications  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 EVENTS = REPO / "pipeline" / "events.json"
 SEEN = REPO / "state/seen.json"
@@ -514,18 +517,9 @@ def report_body(doc, today, start, end, period="week"):
 # AND title (filter_run.py), so the title is what matters. A row written here carries
 # the job title, never just the company, or a different role there would be hidden.
 APPS = REPO / "state/applications.md"
-APPS_COLS = ["Researched", "Company", "Role", "Location", "Verdict", "Docs built", "Applied", "Outcome"]
+APPS_COLS = applications.COLS
 MAILBOX_VERDICT = "not researched, found in the mailbox"
 NO_ROLE = re.compile(r"not named|unknown|^(n/?a|none|\?)$", re.I)
-
-
-def _cells(line):
-    c = [x.strip() for x in line.strip().strip("|").split("|")]
-    return c + [""] * (len(APPS_COLS) - len(c))
-
-
-def _row_line(cells):
-    return "| " + " | ".join(x.replace("|", "/") for x in cells) + " |"
 
 
 def _title_hit(a, b):
@@ -550,26 +544,26 @@ def log_application(company, role, day, location="", evidence=""):
     if not APPS.exists():
         return "state/applications.md NOT written: file missing"
     lines = APPS.read_text(encoding="utf-8").split("\n")
-    rows = [(i, _cells(l)) for i, l in enumerate(lines) if l.startswith("| 20")]
-    hits = [(i, c) for i, c in rows if same_company(c[1], company) and _title_hit(c[2], role)]
+    rows = [(i, r) for i, r in ((i, applications.parse(l)) for i, l in enumerate(lines)) if r]
+    hits = [(i, c) for i, c in rows if same_company(c["Company"], company) and _title_hit(c["Role"], role)]
     if len(hits) > 1:
         from jobid import same_title
-        exact = [(i, c) for i, c in hits if same_title(c[2], role)]
+        exact = [(i, c) for i, c in hits if same_title(c["Role"], role)]
         hits = exact if len(exact) == 1 else hits
     if len(hits) > 1:
         return (f"state/applications.md NOT written for {company}, '{role}': matches {len(hits)} rows "
-                f"({'; '.join(c[2] for _, c in hits)}). Stamp the right one by hand.")
+                f"({'; '.join(c['Role'] for _, c in hits)}). Stamp the right one by hand.")
     stamp = f"yes {day} (mailbox)"
     if hits:
         i, c = hits[0]
-        if c[6].lower().startswith("yes"):
-            return f"state/applications.md already says applied: {c[1]}, {c[2]}"
-        c[6] = stamp
-        lines[i] = _row_line(c)
-        msg = f"state/applications.md stamped applied: {c[1]}, {c[2]}"
+        if c["Applied"].lower().startswith("yes"):
+            return f"state/applications.md already says applied: {c['Company']}, {c['Role']}"
+        c["Applied"] = stamp
+        lines[i] = applications.line(c)
+        msg = f"state/applications.md stamped applied: {c['Company']}, {c['Role']}"
     else:
         last = max(i for i, _ in rows) if rows else len(lines) - 1
-        lines.insert(last + 1, _row_line([day, company, role, location, MAILBOX_VERDICT, "", stamp, evidence]))
+        lines.insert(last + 1, applications.line(dict(zip(APPS_COLS, [day, company, role, location, MAILBOX_VERDICT, "", stamp, evidence]))))
         msg = f"state/applications.md row added: {company}, {role}"
     APPS.write_text("\n".join(lines), encoding="utf-8")
     return msg
@@ -634,11 +628,9 @@ def apps_row(company, role):
     from jobid import same_company
     if not APPS.exists():
         return {}
-    for l in APPS.read_text(encoding="utf-8").split("\n"):
-        if l.startswith("| 20"):
-            c = _cells(l)
-            if same_company(c[1], company) and _title_hit(c[2], role):
-                return dict(zip(APPS_COLS, c))
+    for c in applications.rows(APPS):
+        if same_company(c["Company"], company) and _title_hit(c["Role"], role):
+            return c
     return {}
 
 

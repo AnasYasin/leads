@@ -206,8 +206,8 @@ def _twin_links(sc, root, sl=None):
 
 
 def _applied(root):
-    import final_check
-    return final_check.applied(os.path.join(root, "state/applications.md"))
+    import applications
+    return applications.applied(os.path.join(root, "state/applications.md"))
 
 
 def load_for_noon(sc, root=ROOT):
