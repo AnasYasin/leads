@@ -44,7 +44,8 @@ hard rejection are kept under `state/` so no run repeats another's work.
 | `scripts/` | collectors, filter, reader, verdict, render, push |
 | `state/` | the memory carried between runs; empty in this copy |
 | `shortlists/`, `jobs/`, `companies/` | the runs' outputs, the store; empty in this copy |
-| `scripts/store.py` | builds `store/jobs.db`, a local SQLite view of the store, with an `open_jobs` view |
+| `scripts/store.py` | builds `store/jobs.db`, a SQLite view of the store with `open_jobs`; attached to the `store` release after every run |
+| `scripts/applied.py` | marks a job applied from any session, no laptop needed |
 | `docs/FLOW.md`, `docs/SECURITY.md`, `docs/DEPLOY.md` | the flow, what a run can reach, how to deploy |
 | `tests/` | `make ci` runs them; the routine never edits code |
 

@@ -19,6 +19,9 @@ and `.json`, one pack per sent job under `jobs/` with `jobs/index.json`, and `co
 `python3 scripts/store.py` after a pull builds `store/jobs.db`, a SQLite file with every sent job, its full
 description, its applied status from `state/applications.md` and the days since it was posted; the
 `open_jobs` view is the list to apply from. `--check` re-checks each open link and records live or gone.
+The same file is attached to the GitHub release named `store` after every run, so it can be downloaded
+without a laptop. To mark a job applied from any session in the repository:
+`python3 scripts/applied.py "<company>" "<role>" --cv CV_LLM`; it stamps the log and pushes.
 
 Email over Gmail is optional. It runs only when two repository secrets exist, under Settings,
 Secrets and variables, Actions: `GMAIL_ADDRESS`, the Gmail address that sends and receives, and

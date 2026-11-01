@@ -534,9 +534,9 @@ def _title_hit(a, b):
     return min(len(ta), len(tb)) >= 2 and (ta <= tb or tb <= ta)
 
 
-def log_application(company, role, day, location="", evidence=""):
+def log_application(company, role, day, location="", evidence="", how="mailbox", docs=""):
     """Stamp or append the state/applications.md row for one `applied` event. Returns a line
-    for the run report. The laptop copy absorbs these through pick.py."""
+    for the run report. `how` names the source of the stamp (mailbox, by hand); `docs` the CV used."""
     from jobid import same_company
     role = (role or "").strip()
     if not role or NO_ROLE.search(role):
@@ -553,17 +553,20 @@ def log_application(company, role, day, location="", evidence=""):
     if len(hits) > 1:
         return (f"state/applications.md NOT written for {company}, '{role}': matches {len(hits)} rows "
                 f"({'; '.join(c['Role'] for _, c in hits)}). Stamp the right one by hand.")
-    stamp = f"yes {day} (mailbox)"
+    stamp = f"yes {day} ({how})"
+    verdict = MAILBOX_VERDICT if how == "mailbox" else f"applied {how}"
     if hits:
         i, c = hits[0]
         if c["Applied"].lower().startswith("yes"):
             return f"state/applications.md already says applied: {c['Company']}, {c['Role']}"
         c["Applied"] = stamp
+        if docs:
+            c["Docs built"] = docs
         lines[i] = apps_md.line(c)
         msg = f"state/applications.md stamped applied: {c['Company']}, {c['Role']}"
     else:
         last = max(i for i, _ in rows) if rows else len(lines) - 1
-        lines.insert(last + 1, apps_md.line(dict(zip(APPS_COLS, [day, company, role, location, MAILBOX_VERDICT, "", stamp, evidence]))))
+        lines.insert(last + 1, apps_md.line(dict(zip(APPS_COLS, [day, company, role, location, verdict, docs, stamp, evidence]))))
         msg = f"state/applications.md row added: {company}, {role}"
     APPS.write_text("\n".join(lines), encoding="utf-8")
     return msg
