@@ -24,19 +24,20 @@ hard rejection are kept under `state/` so no run repeats another's work.
 
 ## Setting it up for a person
 
-1. Copy this repository into a private one of your own (fork it, or download and push). Everything it writes is personal.
-2. Open Claude Code in it and say: `Read SETUP.md and set this radar up for me.` The session asks for
-   the CV and everything else it needs, fills `instructions/PROFILE.md`, the `profile` and `search`
-   parts of `config/radar.yaml` and the salary table, and stops when
-   `python3 scripts/setup_check.py` prints `READY`.
-3. Follow `docs/DEPLOY.md`: the GitHub app, two secrets for the email, two routines.
+1. On GitHub, press **Use this template** and create a private repository of your own. Everything the
+   radar writes is personal.
+2. Open Claude Code in it and say anything. `CLAUDE.md` makes the first session run the setup: it asks
+   for the CV and everything else it needs, fills `config/person.md`, generates the profile, the search
+   lists and the salary table from it, and stops when `python3 scripts/setup_check.py` prints `READY`.
+3. Follow `docs/DEPLOY.md`: the GitHub app, the delivery secrets, two routines.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
 | `instructions/PROMPT.md` | the run, step by step; the routine prompt points here |
-| `instructions/PROFILE.md` | who the person is and how to score; filled at setup |
+| `config/person.md` | the one file about the person; filled at setup |
+| `instructions/PROFILE.md` | who the person is and how to score; generated from the person file |
 | `instructions/COMPANIES.md` | the company boards the collector polls |
 | `config/radar.yaml` | search words, title and place filters, ranking weights |
 | `scripts/` | collectors, filter, reader, verdict, render, push |
