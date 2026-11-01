@@ -353,12 +353,8 @@ json.dump(phd_off, open(os.path.join(SCRATCH, "phd_off.json"), "w"), ensure_asci
 # candidates in one run, Almetra's five new roles among them. Now a candidate is dropped only
 # when the log holds the same role at that company; otherwise it is kept and tagged
 # `applied_before` with the log row, and instructions/PROFILE.md tells the agent how to weigh it.
-from jobid import same_title, same_company, second_opening, norm_url
+from jobid import same_title, same_company, norm_url, sent_match
 POOL_URLS = {norm_url(c.get("url")) for c in cands if c.get("url")}
-
-
-def _second_opening(j, m):
-    return second_opening(j.get("url"), j.get("title"), m, POOL_URLS)
 
 
 import decisions
@@ -373,16 +369,15 @@ for j in cands:
             continue
         j["applied_before"] = "; ".join("%s (%s, %s)" % (r[1], r[0], r[2]) for r in APPLIED_ROLES
                                          if same_company(r[0], j["company"] or ""))[:200] or "older list"
-    m = is_repeat(j["company"], j["title"], j.get("location", ""), seen, j.get("url", ""), j.get("desc", ""))
-    if m and _second_opening(j, m):
+    # One recipe for every memory (jobid.sent_match): the seen entries, the pool links, the sent texts.
+    m, so = sent_match(j["company"], j["title"], j.get("location", ""), j.get("url", ""), j.get("desc", ""),
+                       seen, POOL_URLS, SENT_PRINTS)
+    if so:
         # The sent job's own link is still in this pool and this row is a different link on the
         # same site, so both are open at once: a second opening, not a repeat (review, 29 Sep 2026:
         # Quantum-Systems Robotics & ML vs ML Engineer, Preply AI Learning vs AI Marketplace).
         j["similar_to_sent"] = "%s | %s (sent %s)" % (m.get("company", ""), m.get("title", ""), m.get("sent", ""))
         m = None
-    if not m and j.get("desc"):
-        # 2 Oct 2026: the same job under another company name, found by its text (decisions.text_twin).
-        m = decisions.text_twin(j["title"], j["desc"], SENT_PRINTS)
     if m:
         repeats.append((j, m))
         continue

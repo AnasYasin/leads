@@ -45,7 +45,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from jobid import canonical_id, is_repeat, same_company, same_role, second_opening  # noqa: E402
+from jobid import canonical_id, is_repeat, same_company, same_role, second_opening, sent_match  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 PATH = os.path.join(ROOT, "state/leftover.json")
@@ -120,8 +120,8 @@ def _was_read(row, read, live=()):
     "(AI Learning)" counted as read and left the list)."""
     if not read:
         return False
-    m = is_repeat(row.get("company") or "", row.get("title") or "", "", read, row.get("url") or "")
-    return bool(m) and not (live and second_opening(row.get("url"), row.get("title"), m, live))
+    m, so = sent_match(row.get("company") or "", row.get("title") or "", "", row.get("url") or "", "", read, live or ())
+    return bool(m) and not so
 
 
 def _key(row):
@@ -226,9 +226,9 @@ def load_for_noon(sc, root=ROOT):
         if _was_read(e, done, set(e.get("twin_live_urls") or [])):
             sent += 1
             continue
-        m = is_repeat(co, ti, e.get("location", ""), _sent_after(seen, e.get("first", "")),
-                      e.get("url", ""), e.get("desc", ""))
-        if m and not second_opening(e.get("url"), ti, m, set(e.get("twin_live_urls") or [])):
+        m, so = sent_match(co, ti, e.get("location", ""), e.get("url", ""), e.get("desc", ""),
+                           _sent_after(seen, e.get("first", "")), set(e.get("twin_live_urls") or []))
+        if m and not so:
             sent += 1
             continue
         cands.append({k: v for k, v in e.items() if k not in ("first", "last", "twin_live_urls")})
