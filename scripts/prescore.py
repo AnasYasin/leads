@@ -11,7 +11,11 @@ the seniority rule. `why` lists what moved the score, so the order can be checke
 
     python3 scripts/prescore.py <scratch>     print candidates.json in score order
 """
-import datetime, json, os, re, sys
+import datetime
+import json
+import os
+import re
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cfg  # noqa: E402

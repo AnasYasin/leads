@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Getro VC portfolio boards. Page size is fixed at 20 regardless of hitsPerPage."""
-import datetime, json, re, sys, urllib.request, concurrent.futures as cf
+import datetime
+import json
+import re
+import sys
+import urllib.request
+import concurrent.futures as cf
 
 HDR = {"Accept": "application/json", "Content-Type": "application/json",
        "User-Agent": "Mozilla/5.0"}
-import os as _os, sys as _sys
+import os as _os
+import sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 import cfg  # noqa: E402
 # VC collections live in config/radar.yaml (search.getro) since 29 Sep 2026.

@@ -31,10 +31,10 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from jobid import is_repeat, norm_url, same_company, same_role, second_opening  # noqa: E402
+from jobid import norm_url, same_company, same_role, sent_match  # noqa: E402
 from lang_band import german  # noqa: E402
 import clearance  # noqa: E402
-import rejected as rejmem  # noqa: E402
+from applications import applied  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 BAD = ("REPEAT", "APPLIED", "GERMAN", "GERMAN?", "CLEARANCE", "UNREAD")
@@ -60,18 +60,6 @@ def pool_urls(scratch):
     return urls
 
 
-def applied(path):
-    out = []
-    try:
-        for l in open(path, encoding="utf-8"):
-            c = [x.strip() for x in l.split("|")]
-            if len(c) >= 9 and re.match(r"\d{4}-\d{2}-\d{2}", c[1]) and c[7].lower().startswith("yes"):
-                out.append((c[2], c[3]))
-    except OSError:
-        pass
-    return out
-
-
 def _norm(t):
     return re.sub(r"[^0-9a-zà-ÿ]+", "", (t or "").lower())
 
@@ -85,15 +73,6 @@ def quoted(lang_line, lines):
         if n and (n in have or any(n[i:i + 30] in have for i in range(0, max(1, len(n) - 29), 3))):
             return True
     return False
-
-
-def clearance_line(text):
-    """The sentence that requires a nationality or a security clearance, or None. Uses the same rule
-    rejected.py applies to rejection reasons, sentence by sentence, with its negation guard."""
-    for s in re.split(r"(?<=[.!?\n])\s+", text or ""):
-        if len(s) <= 300 and rejmem.CLEARANCE_KILL.search(s) and not rejmem.NOT_KILL.search(s):
-            return s.strip()[:200]
-    return None
 
 
 def check(shortlist_path, root=ROOT):
@@ -111,6 +90,7 @@ def check(shortlist_path, root=ROOT):
     apps = applied(os.path.join(root, "state/applications.md"))
     import decisions
     prints = decisions.sent_prints(root, date if isinstance(date, str) and len(date) == 10 else None)
+    prints = [(e, fp) for e, fp in prints if not ((e.get("sent") or "") == date and e.get("slot") == slot)]  # this run's own first render
     out = []
     # 2 Oct 2026: a job is sent only when scripts/read_next.py printed all of it and it has a "send"
     # verdict. On 2 Oct three jobs went out with an empty description, one of them a NATO-nationality role.
@@ -143,15 +123,11 @@ def check(shortlist_path, root=ROOT):
             if cv == "drop":
                 out.append(("CLEARANCE", co, ti, clines[0][:200]))
                 continue
-        m = is_repeat(co, ti, j.get("location", ""), seen, link, j.get("desc") or "")
-        if not m and j.get("desc"):
-            import decisions
-            m = decisions.text_twin(ti, j["desc"], prints)       # the same text under another company name
-            if m and (m.get("sent") or "") == date and m.get("slot") == slot:
-                m = None                                          # this run's own first render
+        m, so = sent_match(co, ti, j.get("location", ""), link, j.get("desc") or "", seen, urls, prints,
+                           links=[j.get("fallback_url") or "", j.get("url") or ""])
         if not m:
             out.append(("OK", co, ti, ""))
-        elif any(second_opening(u, ti, m, urls) for u in {link, j.get("fallback_url") or "", j.get("url") or ""} if u):
+        elif so:
             out.append(("SECOND OPENING", co, ti, "beside %s | %s (sent %s)" % (m.get("company"), m.get("title"), m.get("sent"))))
         else:
             out.append(("REPEAT", co, ti, "of %s | %s (sent %s)" % (m.get("company"), m.get("title"), m.get("sent"))))

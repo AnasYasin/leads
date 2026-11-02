@@ -48,7 +48,10 @@ THIN = 300
 
 
 def readers():
-    import read_jobs, read_linkedin, read_talent, jobpage
+    import read_jobs
+    import read_linkedin
+    import read_talent
+    import jobpage
     return {"Bundesagentur": read_jobs.one, "linkedin": read_linkedin.one, "talent.com": read_talent.one,
             ANY: jobpage.one}
 
@@ -208,12 +211,10 @@ def _repeat(j, text, seen, pool_urls, sent_prints):
     if not seen and not sent_prints:
         return None
     try:
-        import decisions
-        from jobid import is_repeat, second_opening
-        m = is_repeat(j.get("company") or "", j.get("title") or "", j.get("location", ""), seen, j.get("url") or "", text)
-        if m and second_opening(j.get("url"), j.get("title"), m, pool_urls):
-            m = None
-        return m or decisions.text_twin(j.get("title") or "", text, sent_prints)
+        from jobid import sent_match
+        m, so = sent_match(j.get("company") or "", j.get("title") or "", j.get("location", ""), j.get("url") or "", text,
+                           seen, pool_urls, sent_prints)
+        return None if so else m
     except Exception:
         return None
 

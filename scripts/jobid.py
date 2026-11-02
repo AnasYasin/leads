@@ -406,6 +406,37 @@ def second_opening(url, title, match, pool_urls):
     return bool(a ^ b) and any(len(w) >= 4 for w in a ^ b)
 
 
+
+def sent_match(company, title, location, url, desc, entries, pool_urls=(), prints=(), links=()):
+    """The remembered job this row is, as (entry, second_opening). One recipe for every memory.
+
+    (None, False)   nothing in `entries` or `prints` matches
+    (entry, False)  a repeat of entry: is_repeat on the entries, or decisions.text_twin on the text
+    (entry, True)   a second opening beside entry: a link of the row (url or `links`) and a link
+                    of entry are both live in pool_urls, and the titles differ by a real word
+
+    Until 1 Nov 2026 filter_run, fetch_desc, final_check and leftover each ran these three calls in
+    their own order, and the filter and the final check could disagree. A second opening does not
+    stop the text check: a row that is a second opening beside one sent job and a text twin of
+    another is a repeat of the other. A twin that is itself a second opening is not a repeat.
+    `prints` is decisions.sent_prints(); pass it filtered when some entries must not count.
+    """
+    def opening(m):
+        return any(u and second_opening(u, title, m, pool_urls) for u in set(links) | {url})
+
+    m = is_repeat(company, title, location, entries, url, desc) if entries else None
+    so = None
+    if m and opening(m):
+        so, m = m, None
+    if not m and desc and prints:
+        from decisions import text_twin
+        t = text_twin(title, desc, prints)
+        if t and not opening(t):
+            return t, False
+    if so:
+        return so, True
+    return m, False
+
 # A url only identifies a job when it points at that one job. Some employers have no
 # per-job urls at all — microagi publishes every opening on the single JavaScript careers
 # page `microagi.ai/careers`, so each role gets stored under that same url. The url branch

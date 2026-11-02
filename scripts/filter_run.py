@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Filter the collected pools down to ML-relevant, non-repeat candidates."""
-import json, re, sys, os
+import json
+import re
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from jobid import is_repeat, canonical_id
 import cfg
+import applications
 
 # Every title, employer and location pattern below is read from config/radar.yaml (29 Sep 2026).
 
@@ -87,11 +91,7 @@ def applied_from_log(path=None):
     path = path or os.path.join(ROOT, "state/applications.md")
     if not os.path.exists(path):
         return []
-    txt = open(path, encoding="utf-8").read()
-    names = [l.split("|")[2].strip() for l in txt.splitlines() if l.startswith("| 20")]
-    m = re.search(r"## Older applications.*?\n\n.*?\n\n(.*?)(?:\n\n|\Z)", txt, re.S)
-    if m:
-        names += [n.strip() for n in m.group(1).replace("\n", " ").split(",")]
+    names = [r["Company"] for r in applications.rows(path)] + applications.older_names(path)
     skip = {"general", "group", "gmbh", "ag", "se"}
     out = []
     for n in names:
@@ -107,13 +107,7 @@ def applied_roles(path=None):
     path = path or os.path.join(ROOT, "state/applications.md")
     if not os.path.exists(path):
         return []
-    rows = []
-    for l in open(path, encoding="utf-8"):
-        if l.startswith("| 20"):
-            c = l.split("|")
-            if len(c) > 3:
-                rows.append((c[2].strip().lower(), c[3].strip(), c[1].strip()))
-    return rows
+    return [(r["Company"].lower(), r["Role"], r["Researched"]) for r in applications.rows(path)]
 
 
 APPLIED_ROLES = applied_roles()
@@ -162,8 +156,6 @@ def load(name):
 
 
 cands = []
-
-# --- Bundesagentur ---------------------------------------------------------
 phd_off = []
 
 
@@ -174,187 +166,85 @@ def phd(j):
     return False
 
 
-ba = load("ba.json")
-ba_keep = []
-for j in ba:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    if referral(j):
-        # Referral rows: only the junk-title regex applies, and the title still has to carry an ML word
-        if BAD.search(j["title"]) or not GOOD.search(j["title"]):
-            continue
-    else:
-        if not title_ok(j["title"]):
-            continue
-        if notwanted(j["title"]) or phd(j):
-            continue
-    ba_keep.append(dict(source="Bundesagentur", company=j["company"], title=j["title"],
-                        location=j["location"], url=j["url"], date=j["date"],
-                        ref=j["ref"], art=j.get("art", ""), desc="",
-                        recruiter=bool(RECRUITER.search(j.get("company") or "")),
-                        referral=referral(j)))
-cands += ba_keep
+def screen(j, junk=True, referral_ok=True, place=True):
+    """Why a raw row is out, or None. The one rule for every source (1 Nov 2026; before that each
+    source had its own copy of these lines in its own order). A referral row skips the not-wanted
+    and seniority filters and only needs an ML word in the title. `junk` is off for the company
+    boards and Getro, which carry no training-provider spam. `place` is off for the Bundesagentur,
+    whose rows are nationwide by query."""
+    title = j.get("title") or ""
+    if junk and JUNK_EMPLOYER.search(j.get("company") or ""):
+        return "junk employer"
+    if referral_ok and referral(j):
+        if BAD.search(title) or not GOOD.search(title):
+            return "title"
+    elif not title_ok(title) or notwanted(title) or phd(j):
+        return "title"
+    if place and not loc_ok(j.get("location", ""), title):
+        return "location"
+    return None
 
-# --- ATS -------------------------------------------------------------------
-# 2 Oct 2026: descriptions are kept whole. Every source below used to be cut at 6,000 characters,
-# which cut 42% of the rows that had text and took the end of the posting, where the language line
-# and the requirements usually sit (BLP Digital, Doctolib, Celonis, Makersite, SumUp).
-ats = load("ats.json")
-ats_keep = []
-for j in ats:
-    if referral(j):
-        if BAD.search(j["title"]) or not GOOD.search(j["title"]):
-            continue
-    elif not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    ats_keep.append(dict(source="ATS/" + j.get("source", ""), company=j["company"],
-                         title=j["title"], location=j.get("location", ""),
-                         url=j.get("url", ""), date=j.get("date", ""), salary=j.get("salary", ""),
-                         desc=j.get("desc") or "", referral=referral(j)))
-cands += ats_keep
 
-# --- Getro -----------------------------------------------------------------
-ge = load("getro.json")
-ge_keep = []
-for j in ge:
-    # hipeople.io/job-description/<role> urls are HiPeople's marketing templates written for a
-    # fictional "ExampleCorp", not openings. Documented 5 Aug 2026 evening; they cost a fetch each
-    # and score as nothing. HiPeople's real jobs live on their Ashby board and are unaffected.
-    if "hipeople.io/job-description/" in (j.get("url") or ""):
-        continue
-    if not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    ge_keep.append(dict(source=j.get("source", "getro"), company=j["company"],
-                        title=j["title"], location=j.get("location", ""),
-                        url=j.get("url", ""), date=j.get("date", ""),
-                        desc="", org_url=j.get("org_url", ""),
-                        org_desc=j.get("org_desc", "")))
-cands += ge_keep
+def _rec(j):
+    return bool(RECRUITER.search(j.get("company") or ""))
 
-# --- talent.com (aggregator tier) -----------------------------------------
-# Added 15 Aug 2026 morning. These rows carry no description — they exist to hand over a
-# company name and title so section 3 can go and read the role at source, which is exactly
-# what the LinkedIn/XING/Indeed sweep failed to do for three runs running.
-ta = load("talent.json")
-ta_keep = []
-for j in ta:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    if not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    ta_keep.append(dict(source="talent.com", company=j["company"], title=j["title"],
-                        location=j.get("location", ""), url=j.get("url", ""),
-                        date=j.get("date", ""), age=j.get("age", ""),
-                        feed=j.get("feed", ""), desc="",
-                        recruiter=bool(RECRUITER.search(j.get("company") or ""))))
-cands += ta_keep
 
-# --- arbeitnow -------------------------------------------------------------
-# Added 7 Sep 2026 evening. `collect_arbeitnow.py` was written on 5 Sep evening but this
-# filter was never taught to read its output, so for four runs the 1,400-row pool was
-# either scanned by hand or not at all. Rows carry the full description inline, so they
-# score like an ATS row — but `ingest_date` is arbeitnow's own ingest timestamp, never the
-# employer's posting date, so `date` is deliberately left empty here and the freshness
-# bonus must be taken from the employer's own board instead.
-an = load("arbeitnow.json")
-an_keep = []
-for j in an:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    if not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    an_keep.append(dict(source="arbeitnow", company=j["company"], title=j["title"],
-                        location=j.get("location", ""), url=j.get("url", ""),
-                        date="", ingest_date=j.get("ingest_date", ""),
-                        desc=j.get("desc") or ""))
-cands += an_keep
-
-# --- LinkedIn (guest endpoint, last 24h) -----------------------------------
-# Added 8 Sep 2026. Cards only; read_linkedin.py fetches the description by li_id. LinkedIn
-# pads thin queries with loose matches, so the title filter matters more here than elsewhere.
-li = load("linkedin.json")
-li_keep = []
-for j in li:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    if referral(j):
-        if BAD.search(j["title"]) or not GOOD.search(j["title"]):
-            continue
-    elif not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    li_keep.append(dict(source="linkedin", company=j["company"], title=j["title"],
-                        location=j.get("location", ""), url=j.get("url", ""),
-                        date=j.get("date", ""), li_id=j.get("li_id", ""), desc="",
-                        recruiter=bool(RECRUITER.search(j.get("company") or "")),
-                        referral=referral(j)))
-cands += li_keep
-
-# --- XING (search cards + detail pages) --------------------------------------
-# Added 8 Sep 2026. Rows arrive with the description, the real posting timestamp
-# (`activatedAt`) and the employer's own apply url, so they score like an ATS row.
-xi = load("xing.json")
-xi_keep = []
 import datetime as _dt
-xing_cutoff = (_dt.date.today() - _dt.timedelta(days=14)).isoformat()
-for j in xi:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    # XING's date sort is loose and the pool reaches back a year. The activatedAt date is
-    # real, so anything older than two weeks is not worth a read here.
-    if (j.get("date") or "")[:10] < xing_cutoff:
-        continue
-    if not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    xi_keep.append(dict(source="xing", company=j["company"], title=j["title"],
-                        location=j.get("location", ""), url=j.get("url", ""),
-                        apply_url=j.get("apply_url", ""), date=(j.get("date") or "")[:10],
-                        xing_id=j.get("xing_id", ""), salary=j.get("salary", ""),
-                        desc=j.get("desc") or "",
-                        recruiter=bool(RECRUITER.search(j.get("company") or ""))))
-cands += xi_keep
+# XING's date sort is loose and the pool reaches back a year. The activatedAt date is real, so
+# anything older than two weeks is not worth a read here.
+XING_CUTOFF = (_dt.date.today() - _dt.timedelta(days=14)).isoformat()
 
-# --- StepStone (cloud only) ---------------------------------------------------
-# Added 8 Sep 2026. Rows arrive with the JSON-LD description, employer, real posting date and
-# employment type, so they score like an ATS row. The url is StepStone's own page; the
-# employer's copy still has to be found in section 3 of instructions/PROMPT.md.
-ss = load("stepstone.json")
-ss_keep = []
-for j in ss:
-    if JUNK_EMPLOYER.search(j.get("company") or ""):
-        continue
-    if referral(j):
-        if BAD.search(j["title"]) or not GOOD.search(j["title"]):
+# One line per pool file: the label in the log, the screen flags, the fields the candidate row
+# carries beyond the common ones, and a drop rule of its own. Descriptions are kept whole (2 Oct
+# 2026): every source used to be cut at 6,000 characters, which took the end of the posting, where
+# the language line and the requirements sit.
+#   Bundesagentur  cards; the detail is fetched later, hence desc "".
+#   Getro          hipeople.io/job-description/<role> urls are HiPeople's marketing templates for a
+#                  fictional "ExampleCorp", not openings (5 Aug 2026); the real jobs are on Ashby.
+#   talent.com     cards with no description; they hand over a company and title to read at source.
+#   arbeitnow      `ingest_date` is arbeitnow's own timestamp, never the employer's posting date, so
+#                  `date` is left empty and the freshness bonus comes from the employer's board.
+#   LinkedIn       cards; read_linkedin.py fetches the description by li_id.
+#   XING           description, real posting timestamp and the employer's own apply url.
+#   StepStone      JSON-LD description, employer, real posting date and employment type.
+SOURCES = [
+    ("ba", "BA", dict(place=False),
+     lambda j: dict(source="Bundesagentur", ref=j["ref"], art=j.get("art", ""), desc="", recruiter=_rec(j), referral=referral(j)), None),
+    ("ats", "ATS", dict(junk=False),
+     lambda j: dict(source="ATS/" + j.get("source", ""), salary=j.get("salary", ""), referral=referral(j)), None),
+    ("getro", "Getro", dict(junk=False, referral_ok=False),
+     lambda j: dict(source=j.get("source", "getro"), desc="", org_url=j.get("org_url", ""), org_desc=j.get("org_desc", "")),
+     lambda j: "hipeople.io/job-description/" in (j.get("url") or "")),
+    ("talent", "talent", dict(referral_ok=False),
+     lambda j: dict(source="talent.com", age=j.get("age", ""), feed=j.get("feed", ""), desc="", recruiter=_rec(j)), None),
+    ("arbeitnow", "arbeitnow", dict(referral_ok=False),
+     lambda j: dict(date="", ingest_date=j.get("ingest_date", "")), None),
+    ("linkedin", "linkedin", {},
+     lambda j: dict(li_id=j.get("li_id", ""), desc="", recruiter=_rec(j), referral=referral(j)), None),
+    ("xing", "xing", dict(referral_ok=False),
+     lambda j: dict(apply_url=j.get("apply_url", ""), date=(j.get("date") or "")[:10], xing_id=j.get("xing_id", ""),
+                    salary=j.get("salary", ""), recruiter=_rec(j)),
+     lambda j: (j.get("date") or "")[:10] < XING_CUTOFF),
+    ("stepstone", "stepstone", {},
+     lambda j: dict(date=(j.get("date") or "")[:10], ss_id=j.get("ss_id", ""), employment=j.get("employment", ""),
+                    salary=j.get("salary", ""), recruiter=_rec(j), referral=referral(j)), None),
+]
+
+counts = []
+for name, label, flags, extra, drop in SOURCES:
+    rows = load(name + ".json")
+    keep = []
+    for j in rows:
+        if (drop and drop(j)) or screen(j, **flags):
             continue
-    elif not title_ok(j["title"]) or notwanted(j["title"]) or phd(j):
-        continue
-    if not loc_ok(j.get("location", ""), j["title"]):
-        continue
-    ss_keep.append(dict(source="stepstone", company=j["company"], title=j["title"],
-                        location=j.get("location", ""), url=j.get("url", ""),
-                        date=(j.get("date") or "")[:10], ss_id=j.get("ss_id", ""),
-                        employment=j.get("employment", ""), salary=j.get("salary", ""),
-                        desc=j.get("desc") or "",
-                        recruiter=bool(RECRUITER.search(j.get("company") or "")),
-                        referral=referral(j)))
-cands += ss_keep
+        r = dict(source=name, company=j["company"], title=j["title"], location=j.get("location", ""),
+                 url=j.get("url", ""), date=j.get("date", ""), desc=j.get("desc") or "")
+        r.update(extra(j))
+        keep.append(r)
+    cands += keep
+    counts.append("%s %d / %d" % (label, len(keep), len(rows)))
 
-print("relevance-passed:  BA %d / %d   ATS %d / %d   Getro %d / %d   talent %d / %d   arbeitnow %d / %d   linkedin %d / %d   xing %d / %d   stepstone %d / %d   (phd/student set aside: %d)"
-      % (len(ba_keep), len(ba), len(ats_keep), len(ats), len(ge_keep), len(ge),
-         len(ta_keep), len(ta), len(an_keep), len(an), len(li_keep), len(li),
-         len(xi_keep), len(xi), len(ss_keep), len(ss), len(phd_off)),
-      file=sys.stderr)
+print("relevance-passed:  " + "   ".join(counts) + "   (phd/student set aside: %d)" % len(phd_off), file=sys.stderr)
 json.dump(phd_off, open(os.path.join(SCRATCH, "phd_off.json"), "w"), ensure_ascii=False, indent=1)
 
 # --- repeats + already-applied --------------------------------------------
@@ -362,12 +252,8 @@ json.dump(phd_off, open(os.path.join(SCRATCH, "phd_off.json"), "w"), ensure_asci
 # candidates in one run, Almetra's five new roles among them. Now a candidate is dropped only
 # when the log holds the same role at that company; otherwise it is kept and tagged
 # `applied_before` with the log row, and instructions/PROFILE.md tells the agent how to weigh it.
-from jobid import same_title, same_company, second_opening, norm_url
+from jobid import same_title, same_company, norm_url, sent_match
 POOL_URLS = {norm_url(c.get("url")) for c in cands if c.get("url")}
-
-
-def _second_opening(j, m):
-    return second_opening(j.get("url"), j.get("title"), m, POOL_URLS)
 
 
 import decisions
@@ -382,16 +268,15 @@ for j in cands:
             continue
         j["applied_before"] = "; ".join("%s (%s, %s)" % (r[1], r[0], r[2]) for r in APPLIED_ROLES
                                          if same_company(r[0], j["company"] or ""))[:200] or "older list"
-    m = is_repeat(j["company"], j["title"], j.get("location", ""), seen, j.get("url", ""), j.get("desc", ""))
-    if m and _second_opening(j, m):
+    # One recipe for every memory (jobid.sent_match): the seen entries, the pool links, the sent texts.
+    m, so = sent_match(j["company"], j["title"], j.get("location", ""), j.get("url", ""), j.get("desc", ""),
+                       seen, POOL_URLS, SENT_PRINTS)
+    if so:
         # The sent job's own link is still in this pool and this row is a different link on the
         # same site, so both are open at once: a second opening, not a repeat (review, 29 Sep 2026:
         # Quantum-Systems Robotics & ML vs ML Engineer, Preply AI Learning vs AI Marketplace).
         j["similar_to_sent"] = "%s | %s (sent %s)" % (m.get("company", ""), m.get("title", ""), m.get("sent", ""))
         m = None
-    if not m and j.get("desc"):
-        # 2 Oct 2026: the same job under another company name, found by its text (decisions.text_twin).
-        m = decisions.text_twin(j["title"], j["desc"], SENT_PRINTS)
     if m:
         repeats.append((j, m))
         continue

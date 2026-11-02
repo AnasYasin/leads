@@ -71,6 +71,6 @@ def test_a_dead_line_retires_the_slug_from_both_lists(ats, tmp_path):
     assert "meshcapade" in ats["DEAD"] and not [b for b in ats["BOARDS"] if b[1] == "meshcapade"]
 
 
-def test_a_missing_companies_md_polls_the_hardcoded_boards(ats, tmp_path):
+def test_a_missing_companies_md_polls_nothing(ats, tmp_path):
     out, dead = ats["_from_companies_md"](str(tmp_path / "nope.md"))
     assert out == [] and dead == set()

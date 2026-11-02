@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 
-from conftest import ROOT, SCRIPTS
+from conftest import SCRIPTS
 
 SENTENCE = "You train and ship PyTorch models for computer vision and you own the evaluation. "
 

@@ -16,7 +16,11 @@ Fields (all optional, all strings unless noted): name, aliases (list), site, car
 last_seen (date the radar last sent a job here), sent (list of {date, title, fit, priority}),
 updated, updated_by (cloud|laptop).
 """
-import datetime, json, os, re, sys
+import datetime
+import json
+import os
+import re
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR = os.path.join(ROOT, "companies")

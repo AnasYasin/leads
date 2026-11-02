@@ -11,15 +11,21 @@ Install the Claude GitHub app on that repository: github.com/apps/claude, grant 
 repository. Authorising the app is not enough; it has to be installed, or the routine cannot clone
 or push.
 
-## 2. The email
+## 2. Delivery
 
-The shortlist is sent by the GitHub Action in `.github/workflows/deliver.yml` on every push into
-`shortlists/`. It needs two repository secrets, under Settings, Secrets and variables, Actions:
+Every run pushes its results into this repository, and that is the store: `shortlists/<date>-<slot>.md`
+and `.json`, one pack per sent job under `jobs/` with `jobs/index.json`, and `companies/*.json`.
+`reports/LATEST.md` always holds the newest two runs. Nothing is sent anywhere by default. On a laptop,
+`python3 scripts/store.py` after a pull builds `store/jobs.db`, a SQLite file with every sent job, its full
+description, its applied status from `state/applications.md` and the days since it was posted; the
+`open_jobs` view is the list to apply from. `--check` re-checks each open link and records live or gone.
+Without a laptop, `store/jobs.json` in the repository is the same jobs table as JSON, rewritten by every run. To mark a job applied from any session in the repository:
+`python3 scripts/applied.py "<company>" "<role>" --cv CV_LLM`; it stamps the log and pushes.
 
-- `GMAIL_ADDRESS`: the Gmail address that sends and receives the email.
-- `GMAIL_APP_PASSWORD`: an app password for that account (Google account, Security, App passwords).
-
-Nothing else sends mail. The cloud run never has mail access.
+Email over Gmail is optional. It runs only when two repository secrets exist, under Settings,
+Secrets and variables, Actions: `GMAIL_ADDRESS`, the Gmail address that sends and receives, and
+`GMAIL_APP_PASSWORD`, an app password for that account. Nothing else sends mail. The cloud run never
+has mail access.
 
 ## 3. The routines
 
@@ -58,7 +64,7 @@ Run the morning routine once by hand from its page. Then check three things.
 
 1. A commit `Job radar, <date> morning, <n> new` arrived in the repository, with
    `shortlists/<date>-morning.md`.
-2. The Deliver shortlist Action ran green and the email arrived.
+2. The Deliver shortlist Action ran green and `reports/LATEST.md` holds the run.
 3. The part of the shortlist file below `## Run details` names every source with a row count, and
    the `Source health` block has no `SOURCE ZERO` line. A source at zero on the first run is usually a
    blocked network egress; the environment's network setting must allow the job sites.

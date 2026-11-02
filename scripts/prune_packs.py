@@ -25,15 +25,18 @@ a deleted job is still never sent twice. The file is gone from the tree but stay
     python3 scripts/prune_packs.py <scratch>          check, strike, delete
     python3 scripts/prune_packs.py <scratch> --dry    check and report, change nothing
 """
-import datetime, json, os, re, sys
+import datetime
+import json
+import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from jobid import is_repeat, same_company, same_role  # noqa: E402
+from applications import applied as applied_rows  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
-STATE = os.path.join(ROOT, "state/prune.json")
 MIN_AGE = 3  # 29 Oct 2026: was 20, which never touched his 14-day batch backlog
 EVERY_DAYS = 2  # 29 Oct 2026, the candidate: the backlog refresh runs every second evening, not daily
 STRIKE_GAP = 1
@@ -45,20 +48,6 @@ def _load(p, default):
         return json.load(open(p, encoding="utf-8"))
     except Exception:
         return default
-
-
-def applied_rows(path):
-    out = []
-    try:
-        lines = open(path, encoding="utf-8").read().splitlines()
-    except OSError:
-        return out
-    for l in lines:
-        c = [x.strip() for x in l.split("|")]
-        # | Researched | Company | Role | Location | Verdict | Docs built | Applied | Outcome |
-        if len(c) >= 9 and re.match(r"\d{4}-\d{2}-\d{2}", c[1]) and c[7].lower().startswith("yes"):
-            out.append((c[2], c[3]))
-    return out
 
 
 def pool_rows(scratch):

@@ -32,7 +32,11 @@ are counted for StepStone, XING and LinkedIn and stored on the run as `text`:
     text. fetch_desc.py calls `record_text(sc)` at its end, so this part is filled in later in the run.
 write_pack.py prints the counts in the email every run, flagged or not.
 """
-import datetime, json, os, re, sys
+import datetime
+import json
+import os
+import re
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH = os.path.join(ROOT, "state/health.json")

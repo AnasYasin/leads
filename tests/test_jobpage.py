@@ -149,7 +149,9 @@ def test_one_tries_the_other_links_and_never_raises(web):
 def test_compressed_and_binary_responses():
     import gzip
     from email.message import Message
-    h = Message(); h["Content-Encoding"] = "gzip"; h["Content-Type"] = "text/html; charset=utf-8"
+    h = Message()
+    h["Content-Encoding"] = "gzip"
+    h["Content-Type"] = "text/html; charset=utf-8"
     assert J._decode(gzip.compress("Grüße".encode()), h) == "Grüße"
     with pytest.raises(J.Unreadable):
         J._decode(bytes(range(128, 256)) * 40, Message())

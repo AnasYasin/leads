@@ -1,0 +1,14 @@
+# Lint rules for `make ci` and .github/workflows/tests.yml. Pinned ruff version in both places.
+line-length = 160
+
+[lint]
+# pyflakes plus the pycodestyle errors ruff enables by default.
+select = ["E4", "E7", "E9", "F"]
+# E402: every script puts its own folder on sys.path before importing its siblings.
+# E731: the source and board tables assign small lambdas on purpose.
+# E741: single-letter loop names (`l` for a line) are the house style; renaming 30 of them buys nothing.
+ignore = ["E402", "E731", "E741"]
+
+[lint.per-file-ignores]
+# pytest fixtures imported from another test file and then named as test parameters.
+"tests/test_read_guard.py" = ["F811"]
