@@ -72,19 +72,6 @@ jobs:
           NEWEST: ${{ steps.build.outputs.newest }}
         run: echo "path=$(python3 scripts/correction.py "$NEWEST" || true)" >> "$GITHUB_OUTPUT"
 
-      # The store, downloadable without a laptop: store/jobs.db rebuilt from the repository and
-      # attached to the one release named `store`, replaced on every run. Never stops the rest.
-      - name: Publish the store
-        if: always() && steps.build.outputs.newest != ''
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          python3 scripts/store.py
-          gh release view store > /dev/null 2>&1 || gh release create store --title "The store" --notes "store/jobs.db, rebuilt after every run by scripts/store.py. Download and open with any SQLite tool."
-          gh release upload store store/jobs.db --clobber
-
       # Optional, only when the two Gmail secrets are set (docs/DEPLOY.md).
       - name: Email the newest run
         if: always() && steps.build.outputs.newest != '' && env.GMAIL_ADDRESS != ''

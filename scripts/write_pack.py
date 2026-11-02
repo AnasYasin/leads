@@ -586,7 +586,7 @@ def email_md(sl, jobs, dropped, sc_dir, verdicts_used, date, slot):
 def commit(root, out, md, sl, jobs, dropped, seen, verdicts_used, sc_dir, date, slot):
     """Every write of the run, in this order: the shortlist md, state/rejected.json, state/decisions.json,
     state/leftover.json, the run json, state/seen.json last (a crash before it leaves nothing marked as
-    sent), reports/HEALTH.md, jobs/index.json. Returns the pruned seen rows."""
+    sent), reports/HEALTH.md, jobs/index.json, store/jobs.json. Returns the pruned seen rows."""
     out = os.path.join(root, "shortlists", "%s-%s.md" % (date, slot))
     open(out, "w", encoding="utf-8").write(md)
     # 29 Sep 2026: remember German and clearance kills so filter_run.py skips them next time.
@@ -635,6 +635,11 @@ def commit(root, out, md, sl, jobs, dropped, seen, verdicts_used, sc_dir, date, 
     except Exception as ex:
         print("reports/HEALTH.md not rebuilt: %s" % str(ex)[:80], file=sys.stderr)
     reindex(root)
+    try:
+        import store
+        store.export_json(root)
+    except Exception as ex:
+        print("store/jobs.json not written: %s" % str(ex)[:80], file=sys.stderr)
     return seen
 
 

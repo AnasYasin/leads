@@ -3,6 +3,7 @@
 
     python3 scripts/store.py            rebuild store/jobs.db from the repository
     python3 scripts/store.py --check    also re-check every open job's link and stamp live or gone
+    python3 scripts/store.py --json     write store/jobs.json only (write_pack.py does this after every render)
 
 The repository is the source: jobs/<id>.md (one pack per sent job, with the full description),
 shortlists/<date>-<slot>.json, companies/*.json, state/applications.md, state/decisions.json and
@@ -177,6 +178,29 @@ def build(root=ROOT, out=None, check=False):
     return out, n_jobs
 
 
+def jobs_rows(root=ROOT):
+    """Every sent job as the store sees it: the pack fields, the description, the applied status."""
+    apps = apps_md.rows(os.path.join(root, "state", "applications.md"))
+    out = []
+    for f in sorted(glob.glob(os.path.join(root, "jobs", "*.md"))):
+        j = read_pack(f)
+        j["applied_on"], j["applied_cv"], j["outcome"] = _applied_match(j, apps)
+        out.append({c: j.get(c) for c in JOB_COLS})
+    out.sort(key=lambda j: (str(j.get("sent") or ""), str(j.get("priority") or "")), reverse=True)
+    return out
+
+
+def export_json(root=ROOT):
+    """store/jobs.json, written by write_pack.py after every render and committed with the run, so the
+    data is in the repository without a laptop or a release. Sorted keys and newest first, so a run
+    changes a few entries and git stores a small delta."""
+    path = os.path.join(root, "store", "jobs.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    rows = jobs_rows(root)
+    json.dump(rows, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=True)
+    return path, len(rows)
+
+
 def _jl(path):
     try:
         v = json.load(open(path, encoding="utf-8"))
@@ -193,6 +217,10 @@ def _int(v):
 
 
 if __name__ == "__main__":
+    if "--json" in sys.argv:
+        path, n = export_json()
+        print("%s: %d jobs" % (os.path.relpath(path, ROOT), n))
+        sys.exit(0)
     path, n = build(check="--check" in sys.argv)
     db = sqlite3.connect(path)
     open_n = db.execute("SELECT COUNT(*) FROM open_jobs").fetchone()[0]

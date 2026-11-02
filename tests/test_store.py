@@ -108,3 +108,15 @@ def test_open_jobs_leaves_out_applied_and_gone_and_is_freshest_first(tmp_path):
     db = sqlite3.connect(path)
     assert db.execute("SELECT COUNT(*) FROM open_jobs").fetchone()[0] == 0
     assert db.execute("SELECT state FROM checks").fetchone() == ("GONE",)
+
+
+def test_jobs_json_is_written_with_text_and_status(tmp_path):
+    root = make(tmp_path)
+    path, n = store.export_json(str(root))
+    rows = json.load(open(path, encoding="utf-8"))
+    assert n == 2 and path.endswith(os.path.join("store", "jobs.json"))
+    assert [r["id"] for r in rows] == ["other-ml-engineer-munich", "testfirma-computer-vision-engineer-berlin"] or len(rows) == 2
+    by = {r["id"]: r for r in rows}
+    assert by["other-ml-engineer-munich"]["applied_on"] == "yes 2026-11-01" and by["other-ml-engineer-munich"]["applied_cv"] == "CV_LLM"
+    assert by["testfirma-computer-vision-engineer-berlin"]["description"].startswith("We build PyTorch")
+    assert by["testfirma-computer-vision-engineer-berlin"]["applied_on"] is None
